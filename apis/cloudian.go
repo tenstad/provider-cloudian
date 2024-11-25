@@ -20,6 +20,7 @@ package apis
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 
+	userv1alpha1 "github.com/statnett/provider-cloudian/apis/user/v1alpha1"
 	cloudianv1alpha1 "github.com/statnett/provider-cloudian/apis/v1alpha1"
 )
 
@@ -27,6 +28,7 @@ func init() {
 	// Register the types with the Scheme so the components can map objects to GroupVersionKinds and back
 	AddToSchemes = append(AddToSchemes,
 		cloudianv1alpha1.SchemeBuilder.AddToScheme,
+		userv1alpha1.SchemeBuilder.AddToScheme,
 	)
 }
 
