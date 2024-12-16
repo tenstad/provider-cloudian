@@ -19,19 +19,66 @@ type Client struct {
 }
 
 type Group struct {
-	Active             *string  `json:"active,omitempty"`
+	Active             bool   `json:"active"`
+	GroupID            string `json:"groupId"`
+	GroupName          string `json:"groupName"`
+	LDAPEnabled        bool   `json:"ldapEnabled"`
+	LDAPGroup          string `json:"ldapGroup"`
+	LDAPMatchAttribute string `json:"ldapMatchAttribute"`
+	LDAPSearch         string `json:"ldapSearch"`
+	LDAPSearchUserBase string `json:"ldapSearchUserBase"`
+	LDAPServerURL      string `json:"ldapServerURL"`
+	LDAPUserDNTemplate string `json:"ldapUserDNTemplate"`
+}
+
+// fields must be exported (uppercase) to allow json marshalling
+type groupInternal struct {
+	Active             string   `json:"active"`
 	GroupID            string   `json:"groupId"`
-	GroupName          *string  `json:"groupName,omitempty"`
-	LDAPEnabled        *bool    `json:"ldapEnabled,omitempty"`
-	LDAPGroup          *string  `json:"ldapGroup,omitempty"`
-	LDAPMatchAttribute *string  `json:"ldapMatchAttribute,omitempty"`
-	LDAPSearch         *string  `json:"ldapSearch,omitempty"`
-	LDAPSearchUserBase *string  `json:"ldapSearchUserBase,omitempty"`
-	LDAPServerURL      *string  `json:"ldapServerURL,omitempty"`
-	LDAPUserDNTemplate *string  `json:"ldapUserDNTemplate,omitempty"`
-	S3EndpointsHTTP    []string `json:"s3endpointshttp,omitempty"`
-	S3EndpointsHTTPS   []string `json:"s3endpointshttps,omitempty"`
-	S3WebSiteEndpoints []string `json:"s3websiteendpoints,omitempty"`
+	GroupName          string   `json:"groupName"`
+	LDAPEnabled        bool     `json:"ldapEnabled"`
+	LDAPGroup          string   `json:"ldapGroup"`
+	LDAPMatchAttribute string   `json:"ldapMatchAttribute"`
+	LDAPSearch         string   `json:"ldapSearch"`
+	LDAPSearchUserBase string   `json:"ldapSearchUserBase"`
+	LDAPServerURL      string   `json:"ldapServerURL"`
+	LDAPUserDNTemplate string   `json:"ldapUserDNTemplate"`
+	S3EndpointsHTTP    []string `json:"s3endpointshttp"`
+	S3EndpointsHTTPS   []string `json:"s3endpointshttps"`
+	S3WebSiteEndpoints []string `json:"s3websiteendpoints"`
+}
+
+func toInternal(g Group) groupInternal {
+	return groupInternal{
+		Active:             strconv.FormatBool(g.Active),
+		GroupID:            g.GroupID,
+		GroupName:          g.GroupName,
+		LDAPEnabled:        g.LDAPEnabled,
+		LDAPGroup:          g.LDAPGroup,
+		LDAPMatchAttribute: g.LDAPMatchAttribute,
+		LDAPSearch:         g.LDAPSearch,
+		LDAPSearchUserBase: g.LDAPSearchUserBase,
+		LDAPServerURL:      g.LDAPServerURL,
+		LDAPUserDNTemplate: g.LDAPUserDNTemplate,
+		S3EndpointsHTTP:    []string{"ALL"},
+		S3EndpointsHTTPS:   []string{"ALL"},
+		S3WebSiteEndpoints: []string{"ALL"},
+	}
+}
+
+func fromInternal(g groupInternal) Group {
+	return Group{
+		Active:             g.Active == "true",
+		GroupID:            g.GroupID,
+		GroupName:          g.GroupName,
+		LDAPEnabled:        g.LDAPEnabled,
+		LDAPGroup:          g.LDAPGroup,
+		LDAPMatchAttribute: g.LDAPMatchAttribute,
+		LDAPSearch:         g.LDAPSearch,
+		LDAPSearchUserBase: g.LDAPSearchUserBase,
+		LDAPServerURL:      g.LDAPServerURL,
+		LDAPUserDNTemplate: g.LDAPUserDNTemplate,
+	}
 }
 
 type User struct {
@@ -179,7 +226,7 @@ func (client Client) DeleteGroup(ctx context.Context, groupId string) error {
 func (client Client) CreateGroup(ctx context.Context, group Group) error {
 	url := client.baseURL + "/group"
 
-	jsonData, err := json.Marshal(group)
+	jsonData, err := json.Marshal(toInternal(group))
 	if err != nil {
 		return fmt.Errorf("error marshaling JSON: %w", err)
 	}
@@ -201,7 +248,7 @@ func (client Client) CreateGroup(ctx context.Context, group Group) error {
 func (client Client) UpdateGroup(ctx context.Context, group Group) error {
 	url := client.baseURL + "/group"
 
-	jsonData, err := json.Marshal(group)
+	jsonData, err := json.Marshal(toInternal(group))
 	if err != nil {
 		return fmt.Errorf("error marshaling JSON: %w", err)
 	}
@@ -244,12 +291,13 @@ func (client Client) GetGroup(ctx context.Context, groupId string) (*Group, erro
 			return nil, fmt.Errorf("GET reading response body failed: %w", err)
 		}
 
-		var group Group
+		var group groupInternal
 		if err := json.Unmarshal(body, &group); err != nil {
 			return nil, fmt.Errorf("GET unmarshal response body failed: %w", err)
 		}
 
-		return &group, nil
+		retVal := fromInternal(group)
+		return &retVal, nil
 	case 204:
 		// Cloudian-API returns 204 if the group does not exist
 		return nil, ErrNotFound
