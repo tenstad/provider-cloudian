@@ -48,6 +48,13 @@ type groupInternal struct {
 	S3WebSiteEndpoints []string `json:"s3websiteendpoints"`
 }
 
+// A new group with cloudian defaults set
+func NewGroup(groupId string) Group {
+	return Group{
+		GroupID: groupId,
+	}
+}
+
 func toInternal(g Group) groupInternal {
 	return groupInternal{
 		Active:             strconv.FormatBool(g.Active),

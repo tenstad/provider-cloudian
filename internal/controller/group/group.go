@@ -18,13 +18,14 @@ package group
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/connection"
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
@@ -44,7 +45,11 @@ const (
 	errGetPC        = "cannot get ProviderConfig"
 	errGetCreds     = "cannot get credentials"
 
-	errNewClient = "cannot create new Service"
+	errNewClient   = "cannot create new Service"
+	errCreateGroup = "cannot create Group"
+	errDeleteGroup = "cannot delete Group"
+	errGetGroup    = "cannot get Group"
+	errUpdateGroup = "cannot update Group"
 )
 
 // A NoOpService does nothing.
@@ -145,8 +150,15 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotGroup)
 	}
 
-	// These fmt statements should be removed in the real implementation.
-	fmt.Printf("Observing: %+v", cr)
+	observedGroup, err := c.cloudianService.GetGroup(ctx, cr.Spec.ForProvider.GroupID)
+	if err != nil {
+		if errors.Is(err, cloudian.ErrNotFound) {
+			return managed.ExternalObservation{ResourceExists: false}, nil
+		}
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetGroup)
+	}
+
+	cr.SetConditions(xpv1.Available())
 
 	return managed.ExternalObservation{
 		// Return false when the external resource does not exist. This lets
@@ -157,7 +169,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		// Return false when the external resource exists, but it not up to date
 		// with the desired managed resource state. This lets the managed
 		// resource reconciler know that it needs to call Update.
-		ResourceUpToDate: true,
+		ResourceUpToDate: isUpToDate(cr.Spec.ForProvider, *observedGroup),
 
 		// Return any details that may be required to connect to the external
 		// resource. These will be stored as the connection secret.
@@ -171,7 +183,11 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotGroup)
 	}
 
-	fmt.Printf("Creating: %+v", cr)
+	cr.SetConditions(xpv1.Creating())
+
+	if err := c.cloudianService.CreateGroup(ctx, newGroupFromParams(cr.Spec.ForProvider)); err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateGroup)
+	}
 
 	return managed.ExternalCreation{
 		// Optionally return any details that may be required to connect to the
@@ -186,7 +202,9 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotGroup)
 	}
 
-	fmt.Printf("Updating: %+v", cr)
+	if err := c.cloudianService.UpdateGroup(ctx, newGroupFromParams(cr.Spec.ForProvider)); err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateGroup)
+	}
 
 	return managed.ExternalUpdate{
 		// Optionally return any details that may be required to connect to the
@@ -201,12 +219,35 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalDelete{}, errors.New(errNotGroup)
 	}
 
-	fmt.Printf("Deleting: %+v", cr)
+	cr.SetConditions(xpv1.Deleting())
+
+	if err := c.cloudianService.DeleteGroup(ctx, cr.Spec.ForProvider.GroupID); err != nil {
+		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteGroup)
+	}
 
 	return managed.ExternalDelete{}, nil
 }
 
 func (c *external) Disconnect(ctx context.Context) error {
-	// TODO implement me
-	panic("implement me")
+	return nil
+}
+
+func isUpToDate(desired v1alpha1.GroupParameters, observed cloudian.Group) bool {
+	return newGroupFromParams(desired) == observed
+}
+
+func newGroupFromParams(gp v1alpha1.GroupParameters) cloudian.Group {
+	defaultsGroup := cloudian.NewGroup(gp.GroupID)
+	return cloudian.Group{
+		Active:             gp.Active,
+		GroupID:            gp.GroupID,
+		GroupName:          gp.GroupName,
+		LDAPEnabled:        ptr.Deref(gp.LDAPEnabled, defaultsGroup.LDAPEnabled),
+		LDAPGroup:          ptr.Deref(gp.LDAPGroup, defaultsGroup.LDAPGroup),
+		LDAPMatchAttribute: ptr.Deref(gp.LDAPMatchAttribute, defaultsGroup.LDAPMatchAttribute),
+		LDAPSearch:         ptr.Deref(gp.LDAPSearch, defaultsGroup.LDAPSearch),
+		LDAPSearchUserBase: ptr.Deref(gp.LDAPSearchUserBase, defaultsGroup.LDAPSearchUserBase),
+		LDAPServerURL:      ptr.Deref(gp.LDAPServerURL, defaultsGroup.LDAPServerURL),
+		LDAPUserDNTemplate: ptr.Deref(gp.LDAPUserDNTemplate, defaultsGroup.LDAPUserDNTemplate),
+	}
 }
