@@ -94,6 +94,20 @@ type User struct {
 	GroupID string `json:"groupId"`
 }
 
+type userInternal struct {
+	UserID   string `json:"userId"`
+	GroupID  string `json:"groupId"`
+	UserType string `json:"userType"`
+}
+
+func toInternalUser(u User) userInternal {
+	return userInternal{
+		UserID:   u.UserID,
+		GroupID:  u.GroupID,
+		UserType: "User",
+	}
+}
+
 var ErrNotFound = errors.New("not found")
 
 // WithInsecureTLSVerify skips the TLS validation of the server certificate when `insecure` is true.
@@ -194,6 +208,26 @@ func (client Client) DeleteUser(ctx context.Context, user User) error {
 		return fmt.Errorf("DELETE unexpected status. Failure: %d", resp.StatusCode)
 	}
 
+}
+
+// Create a single user of type `User` into a groupId
+func (client Client) CreateUser(ctx context.Context, user User) error {
+	jsonData, err := json.Marshal(toInternalUser(user))
+	if err != nil {
+		return fmt.Errorf("error marshaling JSON: %w", err)
+	}
+
+	req, err := client.newRequest(ctx, client.baseURL+"/user", http.MethodPut, jsonData)
+	if err != nil {
+		return fmt.Errorf("error creating request: %w", err)
+	}
+
+	resp, err := client.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("PUT to cloudian /user: %w", err)
+	}
+
+	return resp.Body.Close()
 }
 
 // Delete a group and all its members.
