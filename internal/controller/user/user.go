@@ -44,7 +44,11 @@ const (
 	errGetPC        = "cannot get ProviderConfig"
 	errGetCreds     = "cannot get credentials"
 
-	errNewClient = "cannot create new Service"
+	errNewClient  = "cannot create new Service"
+	errCreateUser = "cannot create User"
+	errDeleteUser = "cannot delete User"
+	errListUsers  = "cannot list Users"
+	errGetUser    = "cannot get User"
 )
 
 // A NoOpService does nothing.
@@ -145,8 +149,10 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotUser)
 	}
 
-	// These fmt statements should be removed in the real implementation.
-	fmt.Printf("Observing: %+v", cr)
+	users, err := c.cloudianService.ListUsers(ctx, cr.Spec.ForProvider.GroupID, nil)
+	if err != nil {
+		return managed.ExternalObservation{}, errors.Wrap(err, errListUsers)
+	}
 
 	return managed.ExternalObservation{
 		// Return false when the external resource does not exist. This lets
@@ -157,12 +163,21 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		// Return false when the external resource exists, but it not up to date
 		// with the desired managed resource state. This lets the managed
 		// resource reconciler know that it needs to call Update.
-		ResourceUpToDate: true,
+		ResourceUpToDate: isUpToDate(cr.Spec.ForProvider, users),
 
 		// Return any details that may be required to connect to the external
 		// resource. These will be stored as the connection secret.
 		ConnectionDetails: managed.ConnectionDetails{},
 	}, nil
+}
+
+func isUpToDate(spec v1alpha1.UserParameters, users []cloudian.User) bool {
+	for _, user := range users {
+		if user.UserID == spec.UserID {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
@@ -171,7 +186,13 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotUser)
 	}
 
-	fmt.Printf("Creating: %+v", cr)
+	user := cloudian.User{
+		GroupID: cr.Spec.ForProvider.GroupID,
+		UserID:  cr.Spec.ForProvider.UserID,
+	}
+	if err := c.cloudianService.CreateUser(ctx, user); err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateUser)
+	}
 
 	return managed.ExternalCreation{
 		// Optionally return any details that may be required to connect to the
@@ -186,7 +207,7 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotUser)
 	}
 
-	fmt.Printf("Updating: %+v", cr)
+	fmt.Printf("Pretending to Update (no managed fields to update): %+v", cr)
 
 	return managed.ExternalUpdate{
 		// Optionally return any details that may be required to connect to the
@@ -201,7 +222,13 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalDelete{}, errors.New(errNotUser)
 	}
 
-	fmt.Printf("Deleting: %+v", cr)
+	user := cloudian.User{
+		GroupID: cr.Spec.ForProvider.GroupID,
+		UserID:  cr.Spec.ForProvider.UserID,
+	}
+	if err := c.cloudianService.DeleteUser(ctx, user); err != nil {
+		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteUser)
+	}
 
 	return managed.ExternalDelete{}, nil
 }
