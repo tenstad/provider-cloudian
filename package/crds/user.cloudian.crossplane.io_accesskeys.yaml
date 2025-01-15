@@ -74,14 +74,14 @@ spec:
                 description: AccessKeyParameters are the configurable fields of a
                   AccessKey.
                 properties:
-                  group:
-                    description: Group for the new access key.
+                  groupId:
+                    description: GroupID for the new access key.
                     type: string
-                  user:
+                  userId:
                     description: User for the new access key.
                     type: string
-                  userRef:
-                    description: UserRef is a reference to a user to retrieve its
+                  userIdRef:
+                    description: UserIDRef is a reference to a user to retrieve its
                       userId.
                     properties:
                       name:
@@ -115,8 +115,8 @@ spec:
                     required:
                     - name
                     type: object
-                  userSelector:
-                    description: UserSelector selects reference to a user to retrieve
+                  userIdSelector:
+                    description: UserIDSelector selects reference to a user to retrieve
                       its userId.
                     properties:
                       matchControllerRef:

@@ -27,24 +27,24 @@ import (
 
 // AccessKeyParameters are the configurable fields of a AccessKey.
 type AccessKeyParameters struct {
-	// Group for the new access key.
+	// GroupID for the new access key.
 	// +optional
 	// +immutable
-	Group string `json:"group,omitempty"`
+	GroupID string `json:"groupId,omitempty"`
 
 	// User for the new access key.
 	// +optional
 	// +immutable
-	User string `json:"user,omitempty"`
+	UserID string `json:"userId,omitempty"`
 
-	// UserRef is a reference to a user to retrieve its userId.
+	// UserIDRef is a reference to a user to retrieve its userId.
 	// +optional
 	// +immutable
-	UserRef *xpv1.Reference `json:"userRef,omitempty"`
+	UserIDRef *xpv1.Reference `json:"userIdRef,omitempty"`
 
-	// UserSelector selects reference to a user to retrieve its userId.
+	// UserIDSelector selects reference to a user to retrieve its userId.
 	// +optional
-	UserSelector *xpv1.Selector `json:"userSelector,omitempty"`
+	UserIDSelector *xpv1.Selector `json:"userIdSelector,omitempty"`
 }
 
 // AccessKeyObservation are the observable fields of a AccessKey.
