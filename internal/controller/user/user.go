@@ -147,7 +147,18 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotUser)
 	}
 
-	users, err := c.cloudianService.ListUsers(ctx, cr.Spec.ForProvider.GroupID, nil)
+	externalName := meta.GetExternalName(cr)
+	if externalName == "" {
+		return managed.ExternalObservation{}, nil
+	}
+
+	group := cr.Spec.ForProvider.Group
+	if group == "" {
+		return managed.ExternalObservation{}, nil
+	}
+
+	// TODO: GET User instead of listing users for group
+	users, err := c.cloudianService.ListUsers(ctx, group, nil)
 	if err != nil {
 		return managed.ExternalObservation{}, errors.Wrap(err, errListUsers)
 	}
@@ -187,7 +198,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	user := cloudian.User{
-		GroupID: cr.Spec.ForProvider.GroupID,
+		GroupID: cr.Spec.ForProvider.Group,
 		UserID:  meta.GetExternalName(mg),
 	}
 	if err := c.cloudianService.CreateUser(ctx, user); err != nil {
@@ -223,7 +234,7 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	user := cloudian.User{
-		GroupID: cr.Spec.ForProvider.GroupID,
+		GroupID: cr.Spec.ForProvider.Group,
 		UserID:  meta.GetExternalName(mg),
 	}
 	if err := c.cloudianService.DeleteUser(ctx, user); err != nil {

@@ -27,7 +27,19 @@ import (
 
 // UserParameters are the configurable fields of a User.
 type UserParameters struct {
-	GroupID string `json:"groupId"`
+	// Group for the new user.
+	// +optional
+	// +immutable
+	Group string `json:"group,omitempty"`
+
+	// GroupRef is a reference to a group to retrieve its groupId.
+	// +optional
+	// +immutable
+	GroupRef *xpv1.Reference `json:"groupRef,omitempty"`
+
+	// GroupSelector selects reference to a group to retrieve its groupId.
+	// +optional
+	GroupSelector *xpv1.Selector `json:"groupSelector,omitempty"`
 }
 
 // UserObservation are the observable fields of a User.
