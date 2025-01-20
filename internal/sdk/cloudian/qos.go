@@ -85,32 +85,36 @@ func (client Client) GetQuota(ctx context.Context, user User) (*QoS, error) {
 			return nil, err
 		}
 
-		extract := func(field string) *int64 {
-			for _, item := range data.QOSLimitList {
-				if item.Type != field {
-					continue
-				}
-
-				if item.Value == -1 {
-					return nil
-				}
-				return &item.Value
+		qos := QoS{}
+		for _, item := range data.QOSLimitList {
+			v := &item.Value
+			if item.Value == -1 {
+				v = nil
 			}
-			return nil // Should be unreachable
+			switch item.Type {
+			case "STORAGE_QUOTA_KBYTES_LH":
+				qos.StorageQuota = v
+			case "STORAGE_QUOTA_KBYTES_LW":
+				qos.StorageQuotaWarning = v
+			case "STORAGE_QUOTA_COUNT_LH":
+				qos.StorageQuotaCount = v
+			case "STORAGE_QUOTA_COUNT_LW":
+				qos.StorageQuotaCountWarning = v
+			case "REQUEST_RATE_LH":
+				qos.RequestRatePrMin = v
+			case "REQUEST_RATE_LW":
+				qos.RequestRatePrMinWarning = v
+			case "DATAKBYTES_IN_LH":
+				qos.DataRatePrMinInbound = v
+			case "DATAKBYTES_IN_LW":
+				qos.DataRatePrMinInboundWarning = v
+			case "DATAKBYTES_OUT_LH":
+				qos.DataRatePrMinOutbound = v
+			case "DATAKBYTES_OUT_LW":
+				qos.DataRatePrMinOutboundWarning = v
+			}
 		}
-
-		return &QoS{
-			StorageQuota:                 extract("STORAGE_QUOTA_KBYTES_LH"),
-			StorageQuotaWarning:          extract("STORAGE_QUOTA_KBYTES_LW"),
-			StorageQuotaCount:            extract("STORAGE_QUOTA_COUNT_LH"),
-			StorageQuotaCountWarning:     extract("STORAGE_QUOTA_COUNT_LW"),
-			RequestRatePrMin:             extract("REQUEST_RATE_LH"),
-			RequestRatePrMinWarning:      extract("REQUEST_RATE_LW"),
-			DataRatePrMinInbound:         extract("DATAKBYTES_IN_LH"),
-			DataRatePrMinInboundWarning:  extract("DATAKBYTES_IN_LW"),
-			DataRatePrMinOutbound:        extract("DATAKBYTES_OUT_LH"),
-			DataRatePrMinOutboundWarning: extract("DATAKBYTES_OUT_LW"),
-		}, nil
+		return &qos, nil
 	default:
 		return nil, fmt.Errorf("SET quota unexpected status: %d", resp.StatusCode())
 	}
