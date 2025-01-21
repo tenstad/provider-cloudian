@@ -17,31 +17,31 @@ type QualityOfService struct {
 
 // QualityOfService configures data limits.
 type QualityOfServiceLimits struct {
-	// StorageQuotaKBytes is the limit for total stored data in KiB.
-	StorageQuotaKBytes *int64
+	// StorageQuotaKiBs is the limit for total stored data in KiB.
+	StorageQuotaKiBs *int64
 	// StorageQuotaCount is the limit for total number of objects.
 	StorageQuotaCount *int64
 	// RequestsPerMin is the limit for number of HTTP requests per minute.
 	RequestsPerMin *int64
-	// InboundKBytesPerMin is the limit for inbound data per minute in KiB.
-	InboundKBytesPerMin *int64
-	// OutboundKBytesPerMin is the limit for outbound data per minute in KiB.
-	OutboundKBytesPerMin *int64
+	// InboundKiBsPerMin is the limit for inbound data per minute in KiB.
+	InboundKiBsPerMin *int64
+	// OutboundKiBsPerMin is the limit for outbound data per minute in KiB.
+	OutboundKiBsPerMin *int64
 }
 
 // CreateQuota sets the QoS limits for a `User`. To change QoS limits, a delete and recreate is necessary.
 func (client Client) CreateQuota(ctx context.Context, user User, qos QualityOfService) error {
 	rawParams := map[string]*int64{
-		"hlStorageQuotaKBytes": qos.Hard.StorageQuotaKBytes,
-		"wlStorageQuotaKBytes": qos.Soft.StorageQuotaKBytes,
+		"hlStorageQuotaKBytes": qos.Hard.StorageQuotaKiBs,
+		"wlStorageQuotaKBytes": qos.Soft.StorageQuotaKiBs,
 		"hlStorageQuotaCount":  qos.Hard.StorageQuotaCount,
 		"wlStorageQuotaCount":  qos.Soft.StorageQuotaCount,
 		"hlRequestRate":        qos.Hard.RequestsPerMin,
 		"wlRequestRate":        qos.Soft.RequestsPerMin,
-		"hlDataKBytesIn":       qos.Hard.InboundKBytesPerMin,
-		"wlDataKBytesIn":       qos.Soft.InboundKBytesPerMin,
-		"hlDataKBytesOut":      qos.Hard.OutboundKBytesPerMin,
-		"wlDataKBytesOut":      qos.Soft.OutboundKBytesPerMin,
+		"hlDataKBytesIn":       qos.Hard.InboundKiBsPerMin,
+		"wlDataKBytesIn":       qos.Soft.InboundKiBsPerMin,
+		"hlDataKBytesOut":      qos.Hard.OutboundKiBsPerMin,
+		"wlDataKBytesOut":      qos.Soft.OutboundKiBsPerMin,
 	}
 
 	params := make(map[string]string, len(rawParams))
@@ -104,9 +104,9 @@ func (client Client) GetQuota(ctx context.Context, user User) (*QualityOfService
 			v := &item.Value
 			switch item.Type {
 			case "STORAGE_QUOTA_KBYTES_LH":
-				qos.Hard.StorageQuotaKBytes = v
+				qos.Hard.StorageQuotaKiBs = v
 			case "STORAGE_QUOTA_KBYTES_LW":
-				qos.Soft.StorageQuotaKBytes = v
+				qos.Soft.StorageQuotaKiBs = v
 			case "STORAGE_QUOTA_COUNT_LH":
 				qos.Hard.StorageQuotaCount = v
 			case "STORAGE_QUOTA_COUNT_LW":
@@ -116,13 +116,13 @@ func (client Client) GetQuota(ctx context.Context, user User) (*QualityOfService
 			case "REQUEST_RATE_LW":
 				qos.Soft.RequestsPerMin = v
 			case "DATAKBYTES_IN_LH":
-				qos.Hard.InboundKBytesPerMin = v
+				qos.Hard.InboundKiBsPerMin = v
 			case "DATAKBYTES_IN_LW":
-				qos.Soft.InboundKBytesPerMin = v
+				qos.Soft.InboundKiBsPerMin = v
 			case "DATAKBYTES_OUT_LH":
-				qos.Hard.OutboundKBytesPerMin = v
+				qos.Hard.OutboundKiBsPerMin = v
 			case "DATAKBYTES_OUT_LW":
-				qos.Soft.OutboundKBytesPerMin = v
+				qos.Soft.OutboundKiBsPerMin = v
 			}
 		}
 		return &qos, nil
