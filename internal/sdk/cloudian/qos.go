@@ -70,8 +70,7 @@ func (qos *QualityOfService) unmarshalQOSList(raw []byte) error {
 	return nil
 }
 
-// CreateQuota sets the QoS limits for a `User`. To change QoS limits, a delete and recreate is necessary.
-func (client Client) CreateQuota(ctx context.Context, user User, qos QualityOfService) error {
+func (qos QualityOfService) queryParams() (map[string]string, error) {
 	rawParams := map[string]*int64{
 		"hlStorageQuotaKBytes": qos.Hard.StorageQuotaKiBs,
 		"wlStorageQuotaKBytes": qos.Warning.StorageQuotaKiBs,
@@ -92,9 +91,18 @@ func (client Client) CreateQuota(ctx context.Context, user User, qos QualityOfSe
 			val = *raw
 		}
 		if val < -1 {
-			return fmt.Errorf("invalid QoS limit value: %d", val)
+			return nil, fmt.Errorf("invalid QoS limit value: %d", val)
 		}
 		params[key] = strconv.FormatInt(val, 10)
+	}
+	return params, nil
+}
+
+// CreateQuota sets the QoS limits for a `User`. To change QoS limits, a delete and recreate is necessary.
+func (client Client) CreateQuota(ctx context.Context, user User, qos QualityOfService) error {
+	params, err := qos.queryParams()
+	if err != nil {
+		return err
 	}
 
 	resp, err := client.newRequest(ctx).
