@@ -29,6 +29,51 @@ type QualityOfServiceLimits struct {
 	OutboundKiBsPerMin *int64
 }
 
+// nolint: gocyclo
+func (qos *QualityOfService) unmarshalJSON(raw []byte) error {
+	var data struct {
+		QOSLimitList []struct {
+			Type  string `json:"type"`
+			Value int64  `json:"value"`
+		} `json:"qosLimitList"`
+	}
+
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return err
+	}
+
+	for _, item := range data.QOSLimitList {
+		if item.Value < 0 {
+			continue
+		}
+
+		v := &item.Value
+		switch item.Type {
+		case "STORAGE_QUOTA_KBYTES_LH":
+			qos.Hard.StorageQuotaKiBs = v
+		case "STORAGE_QUOTA_KBYTES_LW":
+			qos.Soft.StorageQuotaKiBs = v
+		case "STORAGE_QUOTA_COUNT_LH":
+			qos.Hard.StorageQuotaCount = v
+		case "STORAGE_QUOTA_COUNT_LW":
+			qos.Soft.StorageQuotaCount = v
+		case "REQUEST_RATE_LH":
+			qos.Hard.RequestsPerMin = v
+		case "REQUEST_RATE_LW":
+			qos.Soft.RequestsPerMin = v
+		case "DATAKBYTES_IN_LH":
+			qos.Hard.InboundKiBsPerMin = v
+		case "DATAKBYTES_IN_LW":
+			qos.Soft.InboundKiBsPerMin = v
+		case "DATAKBYTES_OUT_LH":
+			qos.Hard.OutboundKiBsPerMin = v
+		case "DATAKBYTES_OUT_LW":
+			qos.Soft.OutboundKiBsPerMin = v
+		}
+	}
+	return nil
+}
+
 // CreateQuota sets the QoS limits for a `User`. To change QoS limits, a delete and recreate is necessary.
 func (client Client) CreateQuota(ctx context.Context, user User, qos QualityOfService) error {
 	rawParams := map[string]*int64{
@@ -84,48 +129,8 @@ func (client Client) GetQuota(ctx context.Context, user User) (*QualityOfService
 
 	switch resp.StatusCode() {
 	case 200:
-		var data struct {
-			QOSLimitList []struct {
-				Type  string
-				Value int64
-			} `json:"qosLimitList"`
-		}
-
-		if err := json.Unmarshal(resp.Body(), &data); err != nil {
-			return nil, err
-		}
-
 		qos := QualityOfService{}
-		for _, item := range data.QOSLimitList {
-			if item.Value < 0 {
-				continue
-			}
-
-			v := &item.Value
-			switch item.Type {
-			case "STORAGE_QUOTA_KBYTES_LH":
-				qos.Hard.StorageQuotaKiBs = v
-			case "STORAGE_QUOTA_KBYTES_LW":
-				qos.Soft.StorageQuotaKiBs = v
-			case "STORAGE_QUOTA_COUNT_LH":
-				qos.Hard.StorageQuotaCount = v
-			case "STORAGE_QUOTA_COUNT_LW":
-				qos.Soft.StorageQuotaCount = v
-			case "REQUEST_RATE_LH":
-				qos.Hard.RequestsPerMin = v
-			case "REQUEST_RATE_LW":
-				qos.Soft.RequestsPerMin = v
-			case "DATAKBYTES_IN_LH":
-				qos.Hard.InboundKiBsPerMin = v
-			case "DATAKBYTES_IN_LW":
-				qos.Soft.InboundKiBsPerMin = v
-			case "DATAKBYTES_OUT_LH":
-				qos.Hard.OutboundKiBsPerMin = v
-			case "DATAKBYTES_OUT_LW":
-				qos.Soft.OutboundKiBsPerMin = v
-			}
-		}
-		return &qos, nil
+		return &qos, qos.unmarshalJSON(resp.Body())
 	default:
 		return nil, fmt.Errorf("SET quota unexpected status: %d", resp.StatusCode())
 	}
