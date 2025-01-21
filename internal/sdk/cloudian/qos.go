@@ -9,8 +9,8 @@ import (
 
 // QualityOfService configures data limits for a Group or User.
 type QualityOfService struct {
-	// Soft is the soft (warning) limit.
-	Soft QualityOfServiceLimits
+	// Warning is the soft limit that triggers a warning.
+	Warning QualityOfServiceLimits
 	// Hard is the hard limit.
 	Hard QualityOfServiceLimits
 }
@@ -52,23 +52,23 @@ func (qos *QualityOfService) unmarshalJSON(raw []byte) error {
 		case "STORAGE_QUOTA_KBYTES_LH":
 			qos.Hard.StorageQuotaKiBs = v
 		case "STORAGE_QUOTA_KBYTES_LW":
-			qos.Soft.StorageQuotaKiBs = v
+			qos.Warning.StorageQuotaKiBs = v
 		case "STORAGE_QUOTA_COUNT_LH":
 			qos.Hard.StorageQuotaCount = v
 		case "STORAGE_QUOTA_COUNT_LW":
-			qos.Soft.StorageQuotaCount = v
+			qos.Warning.StorageQuotaCount = v
 		case "REQUEST_RATE_LH":
 			qos.Hard.RequestsPerMin = v
 		case "REQUEST_RATE_LW":
-			qos.Soft.RequestsPerMin = v
+			qos.Warning.RequestsPerMin = v
 		case "DATAKBYTES_IN_LH":
 			qos.Hard.InboundKiBsPerMin = v
 		case "DATAKBYTES_IN_LW":
-			qos.Soft.InboundKiBsPerMin = v
+			qos.Warning.InboundKiBsPerMin = v
 		case "DATAKBYTES_OUT_LH":
 			qos.Hard.OutboundKiBsPerMin = v
 		case "DATAKBYTES_OUT_LW":
-			qos.Soft.OutboundKiBsPerMin = v
+			qos.Warning.OutboundKiBsPerMin = v
 		}
 	}
 	return nil
@@ -78,15 +78,15 @@ func (qos *QualityOfService) unmarshalJSON(raw []byte) error {
 func (client Client) CreateQuota(ctx context.Context, user User, qos QualityOfService) error {
 	rawParams := map[string]*int64{
 		"hlStorageQuotaKBytes": qos.Hard.StorageQuotaKiBs,
-		"wlStorageQuotaKBytes": qos.Soft.StorageQuotaKiBs,
+		"wlStorageQuotaKBytes": qos.Warning.StorageQuotaKiBs,
 		"hlStorageQuotaCount":  qos.Hard.StorageQuotaCount,
-		"wlStorageQuotaCount":  qos.Soft.StorageQuotaCount,
+		"wlStorageQuotaCount":  qos.Warning.StorageQuotaCount,
 		"hlRequestRate":        qos.Hard.RequestsPerMin,
-		"wlRequestRate":        qos.Soft.RequestsPerMin,
+		"wlRequestRate":        qos.Warning.RequestsPerMin,
 		"hlDataKBytesIn":       qos.Hard.InboundKiBsPerMin,
-		"wlDataKBytesIn":       qos.Soft.InboundKiBsPerMin,
+		"wlDataKBytesIn":       qos.Warning.InboundKiBsPerMin,
 		"hlDataKBytesOut":      qos.Hard.OutboundKiBsPerMin,
-		"wlDataKBytesOut":      qos.Soft.OutboundKiBsPerMin,
+		"wlDataKBytesOut":      qos.Warning.OutboundKiBsPerMin,
 	}
 
 	params := make(map[string]string, len(rawParams))
