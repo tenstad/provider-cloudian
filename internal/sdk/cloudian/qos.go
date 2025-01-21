@@ -5,11 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-
-	"k8s.io/utils/ptr"
 )
-
-
 
 // QualityOfService configures soft (warning) and hard limits for a Group or User.
 type QualityOfService struct {
@@ -34,7 +30,10 @@ type QualityOfServiceLimits struct {
 // CreateQuota sets the QoS limits for a `User`. To change QoS limits, a delete and recreate is necessary.
 func (client Client) CreateQuota(ctx context.Context, user User, qos QualityOfService) error {
 	intStr := func(i *int64) string {
-		v := ptr.Deref(i, -1)
+		v := int64(-1)
+		if i != nil {
+			v = *i
+		}
 		if v < -1 {
 			v = -1
 		}
