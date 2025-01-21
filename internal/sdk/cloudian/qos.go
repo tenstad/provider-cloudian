@@ -9,47 +9,53 @@ import (
 	"k8s.io/utils/ptr"
 )
 
-// QoS is the Cloudian API's term for limits on quotas, counts and rates enforced on a `User`
-type QoS struct {
-	// Max storage quota
-	StorageQuota *int64
-	// Warning limit storage quota
-	StorageQuotaWarning *int64
-	// Max storage quota in number of objects
+// QualityOfService configures soft (warning) and hard limits for a Group or User.
+type QualityOfService struct {
+	// StorageQuotaKBytes is the hard limit for total stored data in KiB.
+	StorageQuotaKBytes *int64
+	// StorageQuotaKBytesWarning is the warning limit for total stored data in KiB.
+	StorageQuotaKBytesWarning *int64
+	// StorageQuotaCount is the hard limit for total number of objects.
 	StorageQuotaCount *int64
-	// Warning limit storage quota in number of objects
+	// StorageQuotaCountWarning is the warning limit for total number of objects.
 	StorageQuotaCountWarning *int64
-	// Max nr of HTTP requests per minute
-	RequestRatePrMin *int64
-	// Warning limit nr of HTTP requests per minute
-	RequestRatePrMinWarning *int64
-	// Max inbound datarate in ByteSize per minute
-	DataRatePrMinInbound *int64
-	// Warning limit inbound datarate in ByteSize per minute
-	DataRatePrMinInboundWarning *int64
-	// Max outbound datarate in ByteSize per minute
-	DataRatePrMinOutbound *int64
-	// Warning limit outbound datarate in ByteSize per minute
-	DataRatePrMinOutboundWarning *int64
+	// RequestsPerMin is the hard limit for number of HTTP requests per minute.
+	RequestsPerMin *int64
+	// RequestsPerMinWarning is the warning limit for number of HTTP requests per minute.
+	RequestsPerMinWarning *int64
+	// InboundKBytesPerMin is the hard limit for inbound data per minute in KiB.
+	InboundKBytesPerMin *int64
+	// InboundKBytesPerMin is the warning limit for inbound data per minute in KiB.
+	InboundKBytesPerMinWarning *int64
+	// OutboundKBytesPerMin is the hard limit for outbound data per minute in KiB.
+	OutboundKBytesPerMin *int64
+	// OutboundKBytesPerMinWarning is the warning limit for outbound data per minute in KiB.
+	OutboundKBytesPerMinWarning *int64
 }
 
 // CreateQuota sets the QoS limits for a `User`. To change QoS limits, a delete and recreate is necessary.
-func (client Client) CreateQuota(ctx context.Context, user User, qos QoS) error {
-	intStr := func(i *int64) string { return strconv.FormatInt(ptr.Deref(i, -1), 10) }
+func (client Client) CreateQuota(ctx context.Context, user User, qos QualityOfService) error {
+	intStr := func(i *int64) string {
+		v := ptr.Deref(i, -1)
+		if v < -1 {
+			v = -1
+		}
+		return strconv.FormatInt(v, 10)
+	}
 
 	resp, err := client.newRequest(ctx).
 		SetQueryParam("userId", user.UserID).
 		SetQueryParam("groupId", user.GroupID).
-		SetQueryParam("hlStorageQuotaKBytes", intStr(qos.StorageQuota)).
-		SetQueryParam("wlStorageQuotaKBytes", intStr(qos.StorageQuotaWarning)).
+		SetQueryParam("hlStorageQuotaKBytes", intStr(qos.StorageQuotaKBytes)).
+		SetQueryParam("wlStorageQuotaKBytes", intStr(qos.StorageQuotaKBytesWarning)).
 		SetQueryParam("hlStorageQuotaCount", intStr(qos.StorageQuotaCount)).
 		SetQueryParam("wlStorageQuotaCount", intStr(qos.StorageQuotaCountWarning)).
-		SetQueryParam("hlRequestRate", intStr(qos.RequestRatePrMin)).
-		SetQueryParam("wlRequestRate", intStr(qos.RequestRatePrMinWarning)).
-		SetQueryParam("hlDataKBytesIn", intStr(qos.DataRatePrMinInbound)).
-		SetQueryParam("wlDataKBytesIn", intStr(qos.DataRatePrMinInboundWarning)).
-		SetQueryParam("hlDataKBytesOut", intStr(qos.DataRatePrMinOutbound)).
-		SetQueryParam("wlDataKBytesOut", intStr(qos.DataRatePrMinOutboundWarning)).
+		SetQueryParam("hlRequestRate", intStr(qos.RequestsPerMin)).
+		SetQueryParam("wlRequestRate", intStr(qos.RequestsPerMinWarning)).
+		SetQueryParam("hlDataKBytesIn", intStr(qos.InboundKBytesPerMin)).
+		SetQueryParam("wlDataKBytesIn", intStr(qos.InboundKBytesPerMinWarning)).
+		SetQueryParam("hlDataKBytesOut", intStr(qos.OutboundKBytesPerMin)).
+		SetQueryParam("wlDataKBytesOut", intStr(qos.OutboundKBytesPerMinWarning)).
 		Post("/qos/limits")
 	if err != nil {
 		return err
@@ -63,7 +69,7 @@ func (client Client) CreateQuota(ctx context.Context, user User, qos QoS) error 
 	}
 }
 
-func (client Client) GetQuota(ctx context.Context, user User) (*QoS, error) {
+func (client Client) GetQuota(ctx context.Context, user User) (*QualityOfService, error) {
 	resp, err := client.newRequest(ctx).
 		SetQueryParam("userId", user.UserID).
 		SetQueryParam("groupId", user.GroupID).
@@ -85,33 +91,34 @@ func (client Client) GetQuota(ctx context.Context, user User) (*QoS, error) {
 			return nil, err
 		}
 
-		qos := QoS{}
+		qos := QualityOfService{}
 		for _, item := range data.QOSLimitList {
-			v := &item.Value
-			if item.Value == -1 {
-				v = nil
+			if item.Value < 0 {
+				continue
 			}
+
+			v := &item.Value
 			switch item.Type {
 			case "STORAGE_QUOTA_KBYTES_LH":
-				qos.StorageQuota = v
+				qos.StorageQuotaKBytes = v
 			case "STORAGE_QUOTA_KBYTES_LW":
-				qos.StorageQuotaWarning = v
+				qos.StorageQuotaKBytesWarning = v
 			case "STORAGE_QUOTA_COUNT_LH":
 				qos.StorageQuotaCount = v
 			case "STORAGE_QUOTA_COUNT_LW":
 				qos.StorageQuotaCountWarning = v
 			case "REQUEST_RATE_LH":
-				qos.RequestRatePrMin = v
+				qos.RequestsPerMin = v
 			case "REQUEST_RATE_LW":
-				qos.RequestRatePrMinWarning = v
+				qos.RequestsPerMinWarning = v
 			case "DATAKBYTES_IN_LH":
-				qos.DataRatePrMinInbound = v
+				qos.InboundKBytesPerMin = v
 			case "DATAKBYTES_IN_LW":
-				qos.DataRatePrMinInboundWarning = v
+				qos.InboundKBytesPerMinWarning = v
 			case "DATAKBYTES_OUT_LH":
-				qos.DataRatePrMinOutbound = v
+				qos.OutboundKBytesPerMin = v
 			case "DATAKBYTES_OUT_LW":
-				qos.DataRatePrMinOutboundWarning = v
+				qos.OutboundKBytesPerMinWarning = v
 			}
 		}
 		return &qos, nil
@@ -119,28 +126,3 @@ func (client Client) GetQuota(ctx context.Context, user User) (*QoS, error) {
 		return nil, fmt.Errorf("SET quota unexpected status: %d", resp.StatusCode())
 	}
 }
-
-
-// err := c.CreateQuota(context.TODO(), cloudian.User{
-// 	GroupID: "tenant1",
-// 	UserID:  "*",
-// }, cloudian.QoS{
-// 	StorageQuota:                 nil,
-// 	StorageQuotaWarning:          ptr.To(int64(1)),
-// 	StorageQuotaCount:            ptr.To(int64(2)),
-// 	StorageQuotaCountWarning:     ptr.To(int64(3)),
-// 	RequestRatePrMin:             ptr.To(int64(4)),
-// 	RequestRatePrMinWarning:      ptr.To(int64(5)),
-// 	DataRatePrMinInbound:         ptr.To(int64(6)),
-// 	DataRatePrMinInboundWarning:  ptr.To(int64(7)),
-// 	DataRatePrMinOutbound:        ptr.To(int64(8)),
-// 	DataRatePrMinOutboundWarning: ptr.To(int64(math.MaxInt64)),
-// })
-// fmt.Println(err)
-
-// q, err := c.GetQuota(context.TODO(), cloudian.User{
-// 	GroupID: "tenant1",
-// 	UserID:  "*",
-// })
-// b, e2 := json.Marshal(q)
-// fmt.Println(string(b), err, e2)
