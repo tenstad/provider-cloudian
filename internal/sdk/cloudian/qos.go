@@ -5,51 +5,85 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"k8s.io/utils/ptr"
 )
 
-// QoS is the Cloudian API's term for limits on quotas, counts and rates enforced on a `User`
-type QoS struct {
-	// Max storage quota
-	StorageQuota *int64
-	// Warning limit storage quota
-	StorageQuotaWarning *int64
-	// Max storage quota in number of objects
-	StorageQuotaCount *int64
-	// Warning limit storage quota in number of objects
-	StorageQuotaCountWarning *int64
-	// Max nr of HTTP requests per minute
-	RequestRatePrMin *int64
-	// Warning limit nr of HTTP requests per minute
-	RequestRatePrMinWarning *int64
-	// Max inbound datarate in ByteSize per minute
-	DataRatePrMinInbound *int64
-	// Warning limit inbound datarate in ByteSize per minute
-	DataRatePrMinInboundWarning *int64
-	// Max outbound datarate in ByteSize per minute
-	DataRatePrMinOutbound *int64
-	// Warning limit outbound datarate in ByteSize per minute
-	DataRatePrMinOutboundWarning *int64
+type Limit struct {
+	Soft *int64
+	Hard *int64
+}
+type QoSLimit int
+
+const (
+	StorageQuotaKBytes QoSLimit = iota
+	StorageQuotaCount
+	RequestRate
+	DataKBytesIn
+	DataKBytesOut
+)
+
+var qoSLimitName = map[QoSLimit]string{
+	StorageQuotaKBytes: "StorageQuotaKBytes",
+	StorageQuotaCount:  "StorageQuotaCount",
+	RequestRate:        "RequestRate",
+	DataKBytesIn:       "DataKBytesIn",
+	DataKBytesOut:      "DataKBytesOut",
+}
+var qoSLimitJSONName = map[string]QoSLimit{
+	"STORAGE_QUOTA_KBYTES": StorageQuotaKBytes,
+	"STORAGE_QUOTA_COUNT":  StorageQuotaCount,
+	"REQUEST_RATE":         RequestRate,
+	"DATAKBYTES_IN":        DataKBytesIn,
+	"DATAKBYTES_OUT":       DataKBytesOut,
+}
+
+func (ql QoSLimit) String() string {
+	return qoSLimitName[ql]
+}
+
+type QoS map[QoSLimit]Limit
+
+func (q QoS) QueryParams() map[string]string {
+	params := make(map[string]string)
+	for ql, l := range q {
+		params["wl"+ql.String()] = strconv.FormatInt(ptr.Deref(l.Soft, -1), 10)
+		params["hl"+ql.String()] = strconv.FormatInt(ptr.Deref(l.Hard, -1), 10)
+	}
+	return params
+}
+func (q QoS) UnmarshalJSON(b []byte) error {
+	var data struct {
+		QOSLimitList []struct {
+			Type  string `json:"type"`
+			Value *int64 `json:"value"`
+		} `json:"qosLimitList"`
+	}
+	if err := json.Unmarshal(b, &data); err != nil {
+		return err
+	}
+	for _, ql := range data.QOSLimitList {
+		if before, found := strings.CutSuffix(ql.Type, "_LW"); found {
+			l := q[qoSLimitJSONName[before]]
+			l.Soft = ql.Value
+			q[qoSLimitJSONName[before]] = l
+		}
+		if before, found := strings.CutSuffix(ql.Type, "_LH"); found {
+			l := q[qoSLimitJSONName[before]]
+			l.Hard = ql.Value
+			q[qoSLimitJSONName[before]] = l
+		}
+	}
+	return nil
 }
 
 // CreateQuota sets the QoS limits for a `User`. To change QoS limits, a delete and recreate is necessary.
 func (client Client) CreateQuota(ctx context.Context, user User, qos QoS) error {
-	intStr := func(i *int64) string { return strconv.FormatInt(ptr.Deref(i, -1), 10) }
-
 	resp, err := client.newRequest(ctx).
 		SetQueryParam("userId", user.UserID).
 		SetQueryParam("groupId", user.GroupID).
-		SetQueryParam("hlStorageQuotaKBytes", intStr(qos.StorageQuota)).
-		SetQueryParam("wlStorageQuotaKBytes", intStr(qos.StorageQuotaWarning)).
-		SetQueryParam("hlStorageQuotaCount", intStr(qos.StorageQuotaCount)).
-		SetQueryParam("wlStorageQuotaCount", intStr(qos.StorageQuotaCountWarning)).
-		SetQueryParam("hlRequestRate", intStr(qos.RequestRatePrMin)).
-		SetQueryParam("wlRequestRate", intStr(qos.RequestRatePrMinWarning)).
-		SetQueryParam("hlDataKBytesIn", intStr(qos.DataRatePrMinInbound)).
-		SetQueryParam("wlDataKBytesIn", intStr(qos.DataRatePrMinInboundWarning)).
-		SetQueryParam("hlDataKBytesOut", intStr(qos.DataRatePrMinOutbound)).
-		SetQueryParam("wlDataKBytesOut", intStr(qos.DataRatePrMinOutboundWarning)).
+		SetQueryParams(qos.QueryParams()).
 		Post("/qos/limits")
 	if err != nil {
 		return err
@@ -74,67 +108,22 @@ func (client Client) GetQuota(ctx context.Context, user User) (*QoS, error) {
 
 	switch resp.StatusCode() {
 	case 200:
-		var data struct {
-			QOSLimitList []struct {
-				Type  string
-				Value int64
-			} `json:"qosLimitList"`
-		}
-
-		if err := json.Unmarshal(resp.Body(), &data); err != nil {
-			return nil, err
-		}
-
 		qos := QoS{}
-		for _, item := range data.QOSLimitList {
-			v := &item.Value
-			if item.Value == -1 {
-				v = nil
-			}
-			switch item.Type {
-			case "STORAGE_QUOTA_KBYTES_LH":
-				qos.StorageQuota = v
-			case "STORAGE_QUOTA_KBYTES_LW":
-				qos.StorageQuotaWarning = v
-			case "STORAGE_QUOTA_COUNT_LH":
-				qos.StorageQuotaCount = v
-			case "STORAGE_QUOTA_COUNT_LW":
-				qos.StorageQuotaCountWarning = v
-			case "REQUEST_RATE_LH":
-				qos.RequestRatePrMin = v
-			case "REQUEST_RATE_LW":
-				qos.RequestRatePrMinWarning = v
-			case "DATAKBYTES_IN_LH":
-				qos.DataRatePrMinInbound = v
-			case "DATAKBYTES_IN_LW":
-				qos.DataRatePrMinInboundWarning = v
-			case "DATAKBYTES_OUT_LH":
-				qos.DataRatePrMinOutbound = v
-			case "DATAKBYTES_OUT_LW":
-				qos.DataRatePrMinOutboundWarning = v
-			}
-		}
-		return &qos, nil
+		return &qos, qos.UnmarshalJSON(resp.Body())
 	default:
 		return nil, fmt.Errorf("SET quota unexpected status: %d", resp.StatusCode())
 	}
 }
 
-
 // err := c.CreateQuota(context.TODO(), cloudian.User{
 // 	GroupID: "tenant1",
 // 	UserID:  "*",
 // }, cloudian.QoS{
-// 	StorageQuota:                 nil,
-// 	StorageQuotaWarning:          ptr.To(int64(1)),
-// 	StorageQuotaCount:            ptr.To(int64(2)),
-// 	StorageQuotaCountWarning:     ptr.To(int64(3)),
-// 	RequestRatePrMin:             ptr.To(int64(4)),
-// 	RequestRatePrMinWarning:      ptr.To(int64(5)),
-// 	DataRatePrMinInbound:         ptr.To(int64(6)),
-// 	DataRatePrMinInboundWarning:  ptr.To(int64(7)),
-// 	DataRatePrMinOutbound:        ptr.To(int64(8)),
-// 	DataRatePrMinOutboundWarning: ptr.To(int64(math.MaxInt64)),
+// 	cloudian.StorageQuotaKBytes: cloudian.Limit{Soft: ptr.To(int64(1)), Hard: ptr.To(int64(6))},
+// 	cloudian.StorageQuotaCount:  cloudian.Limit{Soft: ptr.To(int64(2)), Hard: ptr.To(int64(7))},
+// 	cloudian.RequestRate:        cloudian.Limit{Soft: ptr.To(int64(3)), Hard: ptr.To(int64(8))},
+// 	cloudian.DataKBytesIn:       cloudian.Limit{Soft: ptr.To(int64(4)), Hard: ptr.To(int64(9))},
+// 	cloudian.DataKBytesOut:      cloudian.Limit{Soft: ptr.To(int64(5)), Hard: ptr.To(int64(10))},
 // })
 // fmt.Println(err)
 
