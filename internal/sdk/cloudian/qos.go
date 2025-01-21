@@ -29,30 +29,35 @@ type QualityOfServiceLimits struct {
 
 // CreateQuota sets the QoS limits for a `User`. To change QoS limits, a delete and recreate is necessary.
 func (client Client) CreateQuota(ctx context.Context, user User, qos QualityOfService) error {
-	intStr := func(i *int64) string {
-		v := int64(-1)
-		if i != nil {
-			v = *i
+	rawParams := map[string]*int64{
+		"hlStorageQuotaKBytes": qos.Hard.StorageQuotaKBytes,
+		"wlStorageQuotaKBytes": qos.Soft.StorageQuotaKBytes,
+		"hlStorageQuotaCount":  qos.Hard.StorageQuotaCount,
+		"wlStorageQuotaCount":  qos.Soft.StorageQuotaCount,
+		"hlRequestRate":        qos.Hard.RequestsPerMin,
+		"wlRequestRate":        qos.Soft.RequestsPerMin,
+		"hlDataKBytesIn":       qos.Hard.InboundKBytesPerMin,
+		"wlDataKBytesIn":       qos.Soft.InboundKBytesPerMin,
+		"hlDataKBytesOut":      qos.Hard.OutboundKBytesPerMin,
+		"wlDataKBytesOut":      qos.Soft.OutboundKBytesPerMin,
+	}
+
+	params := make(map[string]string, len(rawParams))
+	for key, raw := range rawParams {
+		val := int64(-1)
+		if raw != nil {
+			val = *raw
 		}
-		if v < -1 {
-			v = -1
+		if val < -1 {
+			val = -1
 		}
-		return strconv.FormatInt(v, 10)
+		params[key] = strconv.FormatInt(val, 10)
 	}
 
 	resp, err := client.newRequest(ctx).
 		SetQueryParam("userId", user.UserID).
 		SetQueryParam("groupId", user.GroupID).
-		SetQueryParam("hlStorageQuotaKBytes", intStr(qos.Hard.StorageQuotaKBytes)).
-		SetQueryParam("wlStorageQuotaKBytes", intStr(qos.Soft.StorageQuotaKBytes)).
-		SetQueryParam("hlStorageQuotaCount", intStr(qos.Hard.StorageQuotaCount)).
-		SetQueryParam("wlStorageQuotaCount", intStr(qos.Soft.StorageQuotaCount)).
-		SetQueryParam("hlRequestRate", intStr(qos.Hard.RequestsPerMin)).
-		SetQueryParam("wlRequestRate", intStr(qos.Soft.RequestsPerMin)).
-		SetQueryParam("hlDataKBytesIn", intStr(qos.Hard.InboundKBytesPerMin)).
-		SetQueryParam("wlDataKBytesIn", intStr(qos.Soft.InboundKBytesPerMin)).
-		SetQueryParam("hlDataKBytesOut", intStr(qos.Hard.OutboundKBytesPerMin)).
-		SetQueryParam("wlDataKBytesOut", intStr(qos.Soft.OutboundKBytesPerMin)).
+		SetQueryParams(params).
 		Post("/qos/limits")
 	if err != nil {
 		return err
