@@ -70,7 +70,7 @@ func (qos *QualityOfService) unmarshalQOSList(raw []byte) error {
 	return nil
 }
 
-func (qos QualityOfService) queryParams(params map[string]string) error {
+func (qos *QualityOfService) queryParams(params map[string]string) error {
 	rawParams := map[string]*int64{
 		"hlStorageQuotaKBytes": qos.Hard.StorageQuotaKiBs,
 		"wlStorageQuotaKBytes": qos.Warning.StorageQuotaKiBs,
