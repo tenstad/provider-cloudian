@@ -9,28 +9,26 @@ import (
 	"k8s.io/utils/ptr"
 )
 
+
+
 // QualityOfService configures soft (warning) and hard limits for a Group or User.
 type QualityOfService struct {
-	// StorageQuotaKBytes is the hard limit for total stored data in KiB.
+	Soft QualityOfServiceLimits
+	Hard QualityOfServiceLimits
+}
+
+// QualityOfService configures limits.
+type QualityOfServiceLimits struct {
+	// StorageQuotaKBytes is the limit for total stored data in KiB.
 	StorageQuotaKBytes *int64
-	// StorageQuotaKBytesWarning is the warning limit for total stored data in KiB.
-	StorageQuotaKBytesWarning *int64
-	// StorageQuotaCount is the hard limit for total number of objects.
+	// StorageQuotaCount is the limit for total number of objects.
 	StorageQuotaCount *int64
-	// StorageQuotaCountWarning is the warning limit for total number of objects.
-	StorageQuotaCountWarning *int64
-	// RequestsPerMin is the hard limit for number of HTTP requests per minute.
+	// RequestsPerMin is the limit for number of HTTP requests per minute.
 	RequestsPerMin *int64
-	// RequestsPerMinWarning is the warning limit for number of HTTP requests per minute.
-	RequestsPerMinWarning *int64
-	// InboundKBytesPerMin is the hard limit for inbound data per minute in KiB.
+	// InboundKBytesPerMin is the limit for inbound data per minute in KiB.
 	InboundKBytesPerMin *int64
-	// InboundKBytesPerMin is the warning limit for inbound data per minute in KiB.
-	InboundKBytesPerMinWarning *int64
-	// OutboundKBytesPerMin is the hard limit for outbound data per minute in KiB.
+	// OutboundKBytesPerMin is the limit for outbound data per minute in KiB.
 	OutboundKBytesPerMin *int64
-	// OutboundKBytesPerMinWarning is the warning limit for outbound data per minute in KiB.
-	OutboundKBytesPerMinWarning *int64
 }
 
 // CreateQuota sets the QoS limits for a `User`. To change QoS limits, a delete and recreate is necessary.
@@ -46,16 +44,16 @@ func (client Client) CreateQuota(ctx context.Context, user User, qos QualityOfSe
 	resp, err := client.newRequest(ctx).
 		SetQueryParam("userId", user.UserID).
 		SetQueryParam("groupId", user.GroupID).
-		SetQueryParam("hlStorageQuotaKBytes", intStr(qos.StorageQuotaKBytes)).
-		SetQueryParam("wlStorageQuotaKBytes", intStr(qos.StorageQuotaKBytesWarning)).
-		SetQueryParam("hlStorageQuotaCount", intStr(qos.StorageQuotaCount)).
-		SetQueryParam("wlStorageQuotaCount", intStr(qos.StorageQuotaCountWarning)).
-		SetQueryParam("hlRequestRate", intStr(qos.RequestsPerMin)).
-		SetQueryParam("wlRequestRate", intStr(qos.RequestsPerMinWarning)).
-		SetQueryParam("hlDataKBytesIn", intStr(qos.InboundKBytesPerMin)).
-		SetQueryParam("wlDataKBytesIn", intStr(qos.InboundKBytesPerMinWarning)).
-		SetQueryParam("hlDataKBytesOut", intStr(qos.OutboundKBytesPerMin)).
-		SetQueryParam("wlDataKBytesOut", intStr(qos.OutboundKBytesPerMinWarning)).
+		SetQueryParam("hlStorageQuotaKBytes", intStr(qos.Hard.StorageQuotaKBytes)).
+		SetQueryParam("wlStorageQuotaKBytes", intStr(qos.Soft.StorageQuotaKBytes)).
+		SetQueryParam("hlStorageQuotaCount", intStr(qos.Hard.StorageQuotaCount)).
+		SetQueryParam("wlStorageQuotaCount", intStr(qos.Soft.StorageQuotaCount)).
+		SetQueryParam("hlRequestRate", intStr(qos.Hard.RequestsPerMin)).
+		SetQueryParam("wlRequestRate", intStr(qos.Soft.RequestsPerMin)).
+		SetQueryParam("hlDataKBytesIn", intStr(qos.Hard.InboundKBytesPerMin)).
+		SetQueryParam("wlDataKBytesIn", intStr(qos.Soft.InboundKBytesPerMin)).
+		SetQueryParam("hlDataKBytesOut", intStr(qos.Hard.OutboundKBytesPerMin)).
+		SetQueryParam("wlDataKBytesOut", intStr(qos.Soft.OutboundKBytesPerMin)).
 		Post("/qos/limits")
 	if err != nil {
 		return err
@@ -100,25 +98,25 @@ func (client Client) GetQuota(ctx context.Context, user User) (*QualityOfService
 			v := &item.Value
 			switch item.Type {
 			case "STORAGE_QUOTA_KBYTES_LH":
-				qos.StorageQuotaKBytes = v
+				qos.Hard.StorageQuotaKBytes = v
 			case "STORAGE_QUOTA_KBYTES_LW":
-				qos.StorageQuotaKBytesWarning = v
+				qos.Soft.StorageQuotaKBytes = v
 			case "STORAGE_QUOTA_COUNT_LH":
-				qos.StorageQuotaCount = v
+				qos.Hard.StorageQuotaCount = v
 			case "STORAGE_QUOTA_COUNT_LW":
-				qos.StorageQuotaCountWarning = v
+				qos.Soft.StorageQuotaCount = v
 			case "REQUEST_RATE_LH":
-				qos.RequestsPerMin = v
+				qos.Hard.RequestsPerMin = v
 			case "REQUEST_RATE_LW":
-				qos.RequestsPerMinWarning = v
+				qos.Soft.RequestsPerMin = v
 			case "DATAKBYTES_IN_LH":
-				qos.InboundKBytesPerMin = v
+				qos.Hard.InboundKBytesPerMin = v
 			case "DATAKBYTES_IN_LW":
-				qos.InboundKBytesPerMinWarning = v
+				qos.Soft.InboundKBytesPerMin = v
 			case "DATAKBYTES_OUT_LH":
-				qos.OutboundKBytesPerMin = v
+				qos.Hard.OutboundKBytesPerMin = v
 			case "DATAKBYTES_OUT_LW":
-				qos.OutboundKBytesPerMinWarning = v
+				qos.Soft.OutboundKBytesPerMin = v
 			}
 		}
 		return &qos, nil
