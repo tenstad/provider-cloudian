@@ -43,10 +43,6 @@ func (qos *QualityOfService) unmarshalQOSList(raw []byte) error {
 	}
 
 	for _, item := range data.QOSLimitList {
-		if item.Value < 0 {
-			continue
-		}
-
 		v := &item.Value
 		switch item.Type {
 		case "STORAGE_QUOTA_KBYTES_LH":
@@ -96,7 +92,7 @@ func (client Client) CreateQuota(ctx context.Context, user User, qos QualityOfSe
 			val = *raw
 		}
 		if val < -1 {
-			val = -1
+			return fmt.Errorf("invalid QoS limit value: %d", val)
 		}
 		params[key] = strconv.FormatInt(val, 10)
 	}
