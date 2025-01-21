@@ -7,13 +7,15 @@ import (
 	"strconv"
 )
 
-// QualityOfService configures soft (warning) and hard limits for a Group or User.
+// QualityOfService configures data limits for a Group or User.
 type QualityOfService struct {
+	// Soft is the soft (warning) limit.
 	Soft QualityOfServiceLimits
+	// Hard is the hard limit.
 	Hard QualityOfServiceLimits
 }
 
-// QualityOfService configures limits.
+// QualityOfService configures data limits.
 type QualityOfServiceLimits struct {
 	// StorageQuotaKBytes is the limit for total stored data in KiB.
 	StorageQuotaKBytes *int64
