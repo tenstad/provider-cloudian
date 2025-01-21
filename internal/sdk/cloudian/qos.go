@@ -97,8 +97,14 @@ func (qos QualityOfService) queryParams(params map[string]string) error {
 	return nil
 }
 
-// CreateQuota sets the QoS limits for a `User`. To change QoS limits, a delete and recreate is necessary.
-func (client Client) CreateQuota(ctx context.Context, user User, qos QualityOfService) error {
+// SetQOS sets QualityOfService limits for a Group or User, depending on the value of GroupID and UserID.
+//
+// User-level QoS for a specific user (GroupID="<groupId>", UserID="<userId>")
+// Default user-level QoS for a specific group (GroupID="<groupId>", UserID="ALL")
+// Default user-level QoS for the whole region (GroupID="*", UserID="ALL")
+// Group-level QoS for a specific group (GroupID="<groupId>", UserID="*")
+// Default group-level QoS for the whole region (GroupID="ALL", UserID="*")
+func (client Client) SetQOS(ctx context.Context, user User, qos QualityOfService) error {
 	params := make(map[string]string)
 	if err := qos.queryParams(params); err != nil {
 		return err
@@ -121,7 +127,9 @@ func (client Client) CreateQuota(ctx context.Context, user User, qos QualityOfSe
 	}
 }
 
-func (client Client) GetQuota(ctx context.Context, user User) (*QualityOfService, error) {
+// SetQOS gets QualityOfService limits for a Group or User, depending on the value of GroupID and UserID.
+// See SetQOS for details.
+func (client Client) GetQOS(ctx context.Context, user User) (*QualityOfService, error) {
 	resp, err := client.newRequest(ctx).
 		SetQueryParam("userId", user.UserID).
 		SetQueryParam("groupId", user.GroupID).
