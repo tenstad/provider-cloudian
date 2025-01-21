@@ -30,7 +30,7 @@ type QualityOfServiceLimits struct {
 }
 
 // nolint: gocyclo
-func (qos *QualityOfService) unmarshalJSON(raw []byte) error {
+func (qos *QualityOfService) unmarshalQOSList(raw []byte) error {
 	var data struct {
 		QOSLimitList []struct {
 			Type  string `json:"type"`
@@ -130,7 +130,7 @@ func (client Client) GetQuota(ctx context.Context, user User) (*QualityOfService
 	switch resp.StatusCode() {
 	case 200:
 		qos := &QualityOfService{}
-		return qos, qos.unmarshalJSON(resp.Body())
+		return qos, qos.unmarshalQOSList(resp.Body())
 	default:
 		return nil, fmt.Errorf("SET quota unexpected status: %d", resp.StatusCode())
 	}
