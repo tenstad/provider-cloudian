@@ -129,8 +129,8 @@ func (client Client) GetQuota(ctx context.Context, user User) (*QualityOfService
 
 	switch resp.StatusCode() {
 	case 200:
-		qos := QualityOfService{}
-		return &qos, qos.unmarshalJSON(resp.Body())
+		qos := &QualityOfService{}
+		return qos, qos.unmarshalJSON(resp.Body())
 	default:
 		return nil, fmt.Errorf("SET quota unexpected status: %d", resp.StatusCode())
 	}
