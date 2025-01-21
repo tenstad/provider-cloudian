@@ -123,7 +123,7 @@ func (client Client) SetQOS(ctx context.Context, user User, qos QualityOfService
 	case 200:
 		return nil
 	default:
-		return fmt.Errorf("SET quota unexpected status: %d", resp.StatusCode())
+		return fmt.Errorf("POST quota unexpected status: %d", resp.StatusCode())
 	}
 }
 
