@@ -132,6 +132,6 @@ func (client Client) GetQuota(ctx context.Context, user User) (*QualityOfService
 		qos := &QualityOfService{}
 		return qos, qos.unmarshalQOSList(resp.Body())
 	default:
-		return nil, fmt.Errorf("SET quota unexpected status: %d", resp.StatusCode())
+		return nil, fmt.Errorf("GET quota unexpected status: %d", resp.StatusCode())
 	}
 }
