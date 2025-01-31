@@ -158,3 +158,28 @@ func (client Client) GetQOS(ctx context.Context, user User, region string) (*Qua
 		return nil, fmt.Errorf("GET quota unexpected status: %d", resp.StatusCode())
 	}
 }
+
+// DeleteQOS deletes QualityOfService limits for a Group or User, depending on the value of GroupID and UserID.
+// See SetQOS for details.
+func (client Client) DeleteQOS(ctx context.Context, user User, region string) error {
+	params := make(map[string]string)
+	if region != DefaultRegion {
+		params["region"] = region
+	}
+
+	resp, err := client.newRequest(ctx).
+		SetQueryParam("userId", user.UserID).
+		SetQueryParam("groupId", user.GroupID).
+		SetQueryParams(params).
+		Delete("/qos/limits")
+	if err != nil {
+		return err
+	}
+
+	switch resp.StatusCode() {
+	case 200:
+		return nil
+	default:
+		return fmt.Errorf("DELETE quota unexpected status: %d", resp.StatusCode())
+	}
+}
