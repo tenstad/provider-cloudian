@@ -27,6 +27,19 @@ import (
 
 // GroupQualityOfServiceLimitsParameters are the configurable fields of a GroupQualityOfServiceLimits.
 type GroupQualityOfServiceLimitsParameters struct {
+	// Group for the quality of service limits.
+	// +optional
+	// +immutable
+	GroupID string `json:"groupId,omitempty"`
+
+	// GroupIDRef is a reference to a group to retrieve its groupId.
+	// +optional
+	// +immutable
+	GroupIDRef *xpv1.Reference `json:"groupIdRef,omitempty"`
+
+	// GroupIDSelector selects reference to a group to retrieve its groupId.
+	// +optional
+	GroupIDSelector *xpv1.Selector `json:"groupIdSelector,omitempty"`
 }
 
 // GroupQualityOfServiceLimitsObservation are the observable fields of a GroupQualityOfServiceLimits.
