@@ -76,7 +76,7 @@ type GroupQualityOfServiceLimitsList struct {
 // GroupQualityOfServiceLimits type metadata.
 var (
 	GroupQualityOfServiceLimitsKind             = reflect.TypeOf(GroupQualityOfServiceLimits{}).Name()
-	GroupQualityOfServiceLimitsGroupKind        = schema.GroupKind{Group: Group, Kind: GroupQualityOfServiceLimitsKind}.String()
+	GroupQualityOfServiceLimitsGroupKind        = schema.GroupKind{Group: MetadataGroup, Kind: GroupQualityOfServiceLimitsKind}.String()
 	GroupQualityOfServiceLimitsKindAPIVersion   = GroupQualityOfServiceLimitsKind + "." + SchemeGroupVersion.String()
 	GroupQualityOfServiceLimitsGroupVersionKind = SchemeGroupVersion.WithKind(GroupQualityOfServiceLimitsKind)
 )
