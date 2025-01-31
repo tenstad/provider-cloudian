@@ -154,6 +154,81 @@ spec:
                             type: string
                         type: object
                     type: object
+                  hard:
+                    description: Hard is the hard limit.
+                    properties:
+                      inboundKiBsPerMin:
+                        default: -1
+                        description: InboundKiBsPerMin is the limit for inbound data
+                          per minute in KiB.
+                        format: int64
+                        type: integer
+                      outboundKiBsPerMin:
+                        default: -1
+                        description: OutboundKiBsPerMin is the limit for outbound
+                          data per minute in KiB.
+                        format: int64
+                        type: integer
+                      requestsPerMin:
+                        default: -1
+                        description: RequestsPerMin is the limit for number of HTTP
+                          requests per minute.
+                        format: int64
+                        type: integer
+                      storageQuotaCount:
+                        default: -1
+                        description: StorageQuotaCount is the limit for total number
+                          of objects.
+                        format: int64
+                        type: integer
+                      storageQuotaKiBs:
+                        default: -1
+                        description: StorageQuotaKiBs is the limit for total stored
+                          data in KiB.
+                        format: int64
+                        type: integer
+                    type: object
+                  region:
+                    description: Region in which to apply the quality of service limits.
+                      Default region if unspecified.
+                    type: string
+                  warning:
+                    description: Warning is the soft limit that triggers a warning.
+                    properties:
+                      inboundKiBsPerMin:
+                        default: -1
+                        description: InboundKiBsPerMin is the limit for inbound data
+                          per minute in KiB.
+                        format: int64
+                        type: integer
+                      outboundKiBsPerMin:
+                        default: -1
+                        description: OutboundKiBsPerMin is the limit for outbound
+                          data per minute in KiB.
+                        format: int64
+                        type: integer
+                      requestsPerMin:
+                        default: -1
+                        description: RequestsPerMin is the limit for number of HTTP
+                          requests per minute.
+                        format: int64
+                        type: integer
+                      storageQuotaCount:
+                        default: -1
+                        description: StorageQuotaCount is the limit for total number
+                          of objects.
+                        format: int64
+                        type: integer
+                      storageQuotaKiBs:
+                        default: -1
+                        description: StorageQuotaKiBs is the limit for total stored
+                          data in KiB.
+                        format: int64
+                        type: integer
+                    type: object
+                required:
+                - hard
+                - warning
                 type: object
               managementPolicies:
                 default:
