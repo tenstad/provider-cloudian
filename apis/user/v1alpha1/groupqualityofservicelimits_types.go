@@ -27,12 +27,10 @@ import (
 
 // GroupQualityOfServiceLimitsParameters are the configurable fields of a GroupQualityOfServiceLimits.
 type GroupQualityOfServiceLimitsParameters struct {
-	ConfigurableField string `json:"configurableField"`
 }
 
 // GroupQualityOfServiceLimitsObservation are the observable fields of a GroupQualityOfServiceLimits.
 type GroupQualityOfServiceLimitsObservation struct {
-	ObservableField string `json:"observableField,omitempty"`
 }
 
 // A GroupQualityOfServiceLimitsSpec defines the desired state of a GroupQualityOfServiceLimits.
