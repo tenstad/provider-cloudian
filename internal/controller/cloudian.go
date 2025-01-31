@@ -23,6 +23,7 @@ import (
 	"github.com/statnett/provider-cloudian/internal/controller/accesskey"
 	"github.com/statnett/provider-cloudian/internal/controller/config"
 	"github.com/statnett/provider-cloudian/internal/controller/group"
+	"github.com/statnett/provider-cloudian/internal/controller/groupqualityofservicelimits"
 	"github.com/statnett/provider-cloudian/internal/controller/user"
 )
 
@@ -33,6 +34,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		accesskey.Setup,
 		config.Setup,
 		group.Setup,
+		groupqualityofservicelimits.Setup,
 		user.Setup,
 	} {
 		if err := setup(mgr, o); err != nil {
