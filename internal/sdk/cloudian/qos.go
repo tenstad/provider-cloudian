@@ -106,7 +106,7 @@ func (qos *QualityOfService) queryParams(params map[string]string) error {
 // Default user-level QoS for the whole region (GroupID="*", UserID="ALL")
 // Group-level QoS for a specific group (GroupID="<groupId>", UserID="*")
 // Default group-level QoS for the whole region (GroupID="ALL", UserID="*")
-func (client Client) SetQOS(ctx context.Context, user User, qos QualityOfService, region string) error {
+func (client Client) SetQOS(ctx context.Context, user User, region string, qos QualityOfService) error {
 	params := make(map[string]string)
 	if err := qos.queryParams(params); err != nil {
 		return err
