@@ -25,6 +25,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/connection"
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
@@ -45,6 +46,9 @@ const (
 	errGetCreds                       = "cannot get credentials"
 
 	errNewClient = "cannot create new Service"
+	errCreateQOS = "cannot create QOS"
+	errDeleteQOS = "cannot delete QOS"
+	errGetQOS    = "cannot get QOS"
 )
 
 var (
@@ -142,8 +146,21 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotGroupQualityOfServiceLimits)
 	}
 
-	// These fmt statements should be removed in the real implementation.
-	fmt.Printf("Observing: %+v", cr)
+	group := cr.Spec.ForProvider.GroupID
+	if group == "" {
+		return managed.ExternalObservation{}, nil
+	}
+
+	qos, err := c.cloudianService.GetQOS(ctx, cloudian.User{GroupID: group, UserID: "*"}, cr.Spec.ForProvider.Region)
+	// For consistency/futureproofing - API currently returns ok with all limits as -1 for non-existent groups
+	if errors.Is(err, cloudian.ErrNotFound) {
+		return managed.ExternalObservation{ResourceExists: false}, nil
+	}
+	if err != nil {
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetQOS)
+	}
+
+	cr.SetConditions(xpv1.Available())
 
 	return managed.ExternalObservation{
 		// Return false when the external resource does not exist. This lets
@@ -154,7 +171,17 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		// Return false when the external resource exists, but it not up to date
 		// with the desired managed resource state. This lets the managed
 		// resource reconciler know that it needs to call Update.
-		ResourceUpToDate: true,
+		ResourceUpToDate: qos.Warning.InboundKiBsPerMin == cr.Spec.ForProvider.Warning.InboundKiBsPerMin &&
+			qos.Warning.OutboundKiBsPerMin == cr.Spec.ForProvider.Warning.OutboundKiBsPerMin &&
+			qos.Warning.RequestsPerMin == cr.Spec.ForProvider.Warning.RequestsPerMin &&
+			qos.Warning.StorageQuotaCount == cr.Spec.ForProvider.Warning.StorageQuotaCount &&
+			qos.Warning.StorageQuotaKiBs == cr.Spec.ForProvider.Warning.StorageQuotaKiBs &&
+
+			qos.Hard.InboundKiBsPerMin == cr.Spec.ForProvider.Hard.InboundKiBsPerMin &&
+			qos.Hard.OutboundKiBsPerMin == cr.Spec.ForProvider.Hard.OutboundKiBsPerMin &&
+			qos.Hard.RequestsPerMin == cr.Spec.ForProvider.Hard.RequestsPerMin &&
+			qos.Hard.StorageQuotaCount == cr.Spec.ForProvider.Hard.StorageQuotaCount &&
+			qos.Hard.StorageQuotaKiBs == cr.Spec.ForProvider.Hard.StorageQuotaKiBs,
 
 		// Return any details that may be required to connect to the external
 		// resource. These will be stored as the connection secret.
@@ -168,7 +195,15 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotGroupQualityOfServiceLimits)
 	}
 
-	fmt.Printf("Creating: %+v", cr)
+	qos := toCloudianQos(cr.Spec.ForProvider)
+	user := cloudian.User{
+		GroupID: cr.Spec.ForProvider.GroupID,
+		UserID:  "*",
+	}
+
+	if err := c.cloudianService.SetQOS(ctx, user, cr.Spec.ForProvider.Region, qos); err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateQOS)
+	}
 
 	return managed.ExternalCreation{
 		// Optionally return any details that may be required to connect to the
@@ -183,7 +218,15 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotGroupQualityOfServiceLimits)
 	}
 
-	fmt.Printf("Updating: %+v", cr)
+	qos := toCloudianQos(cr.Spec.ForProvider)
+	user := cloudian.User{
+		GroupID: cr.Spec.ForProvider.GroupID,
+		UserID:  "*",
+	}
+
+	if err := c.cloudianService.SetQOS(ctx, user, cr.Spec.ForProvider.Region, qos); err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errCreateQOS)
+	}
 
 	return managed.ExternalUpdate{
 		// Optionally return any details that may be required to connect to the
@@ -198,11 +241,28 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalDelete{}, errors.New(errNotGroupQualityOfServiceLimits)
 	}
 
-	fmt.Printf("Deleting: %+v", cr)
+	return managed.ExternalDelete{}, fmt.Errorf("unable to delete %v", cr)
 
 	return managed.ExternalDelete{}, nil
 }
 
 func (c *external) Disconnect(ctx context.Context) error {
 	return nil
+}
+
+func toCloudianQos(qos v1alpha1.GroupQualityOfServiceLimitsParameters) cloudian.QualityOfService {
+	return cloudian.QualityOfService{
+		Warning: toCloudianLimits(qos.Warning),
+		Hard:    toCloudianLimits(qos.Hard),
+	}
+}
+
+func toCloudianLimits(limits v1alpha1.QualityOfServiceLimits) cloudian.QualityOfServiceLimits {
+	return cloudian.QualityOfServiceLimits{
+		StorageQuotaKiBs:   limits.StorageQuotaKiBs,
+		StorageQuotaCount:  limits.StorageQuotaCount,
+		RequestsPerMin:     limits.RequestsPerMin,
+		InboundKiBsPerMin:  limits.InboundKiBsPerMin,
+		OutboundKiBsPerMin: limits.OutboundKiBsPerMin,
+	}
 }
