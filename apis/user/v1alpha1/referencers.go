@@ -47,7 +47,7 @@ func (mg *User) ResolveReferences(ctx context.Context, c client.Reader) error {
 	return nil
 }
 
-// ResolveReferences of this GroupQualityOfServiceLimitsParameters
+// ResolveReferences of this GroupQualityOfServiceLimits
 func (mg *GroupQualityOfServiceLimits) ResolveReferences(ctx context.Context, c client.Reader) error {
 	r := reference.NewAPIResolver(c, mg)
 
