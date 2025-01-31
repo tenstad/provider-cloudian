@@ -7,6 +7,8 @@ import (
 	"strconv"
 )
 
+const DefaultRegion = ""
+
 // QualityOfService configures data limits for a Group or User.
 type QualityOfService struct {
 	// Warning is the soft limit that triggers a warning.
@@ -104,10 +106,14 @@ func (qos *QualityOfService) queryParams(params map[string]string) error {
 // Default user-level QoS for the whole region (GroupID="*", UserID="ALL")
 // Group-level QoS for a specific group (GroupID="<groupId>", UserID="*")
 // Default group-level QoS for the whole region (GroupID="ALL", UserID="*")
-func (client Client) SetQOS(ctx context.Context, user User, qos QualityOfService) error {
+func (client Client) SetQOS(ctx context.Context, user User, region string, qos QualityOfService) error {
 	params := make(map[string]string)
 	if err := qos.queryParams(params); err != nil {
 		return err
+	}
+
+	if region != DefaultRegion {
+		params["region"] = region
 	}
 
 	resp, err := client.newRequest(ctx).
@@ -129,10 +135,16 @@ func (client Client) SetQOS(ctx context.Context, user User, qos QualityOfService
 
 // SetQOS gets QualityOfService limits for a Group or User, depending on the value of GroupID and UserID.
 // See SetQOS for details.
-func (client Client) GetQOS(ctx context.Context, user User) (*QualityOfService, error) {
+func (client Client) GetQOS(ctx context.Context, user User, region string) (*QualityOfService, error) {
+	params := make(map[string]string)
+	if region != DefaultRegion {
+		params["region"] = region
+	}
+
 	resp, err := client.newRequest(ctx).
 		SetQueryParam("userId", user.UserID).
 		SetQueryParam("groupId", user.GroupID).
+		SetQueryParams(params).
 		Get("/qos/limits")
 	if err != nil {
 		return nil, err
