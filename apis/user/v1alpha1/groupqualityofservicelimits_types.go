@@ -25,6 +25,25 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 )
 
+// QualityOfService configures data limits. The value -1 indicates unlimited.
+type QualityOfServiceLimits struct {
+	// StorageQuotaKiBs is the limit for total stored data in KiB.
+	//+kubebuilder:default=-1
+	StorageQuotaKiBs *int64 `json:"storageQuotaKiBs,omitempty"`
+	// StorageQuotaCount is the limit for total number of objects.
+	//+kubebuilder:default=-1
+	StorageQuotaCount *int64 `json:"storageQuotaCount,omitempty"`
+	// RequestsPerMin is the limit for number of HTTP requests per minute.
+	//+kubebuilder:default=-1
+	RequestsPerMin *int64 `json:"requestsPerMin,omitempty"`
+	// InboundKiBsPerMin is the limit for inbound data per minute in KiB.
+	//+kubebuilder:default=-1
+	InboundKiBsPerMin *int64 `json:"inboundKiBsPerMin,omitempty"`
+	// OutboundKiBsPerMin is the limit for outbound data per minute in KiB.
+	//+kubebuilder:default=-1
+	OutboundKiBsPerMin *int64 `json:"outboundKiBsPerMin,omitempty"`
+}
+
 // GroupQualityOfServiceLimitsParameters are the configurable fields of a GroupQualityOfServiceLimits.
 type GroupQualityOfServiceLimitsParameters struct {
 	// Group for the quality of service limits.
@@ -40,6 +59,15 @@ type GroupQualityOfServiceLimitsParameters struct {
 	// GroupIDSelector selects reference to a group to retrieve its groupId.
 	// +optional
 	GroupIDSelector *xpv1.Selector `json:"groupIdSelector,omitempty"`
+
+	// Region in which to apply the quality of service limits. Default region if unspecified.
+	Region string `json:"region,omitempty"`
+
+	// Warning is the soft limit that triggers a warning.
+	Warning QualityOfServiceLimits `json:"warning"`
+
+	// Hard is the hard limit.
+	Hard QualityOfServiceLimits `json:"hard"`
 }
 
 // GroupQualityOfServiceLimitsObservation are the observable fields of a GroupQualityOfServiceLimits.
