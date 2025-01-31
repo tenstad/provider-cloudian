@@ -226,9 +226,6 @@ spec:
                         format: int64
                         type: integer
                     type: object
-                required:
-                - hard
-                - warning
                 type: object
               managementPolicies:
                 default:

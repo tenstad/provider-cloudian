@@ -64,9 +64,11 @@ type GroupQualityOfServiceLimitsParameters struct {
 	Region string `json:"region,omitempty"`
 
 	// Warning is the soft limit that triggers a warning.
+	// +optional
 	Warning QualityOfServiceLimits `json:"warning"`
 
 	// Hard is the hard limit.
+	// +optional
 	Hard QualityOfServiceLimits `json:"hard"`
 }
 
