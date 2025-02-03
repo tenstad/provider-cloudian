@@ -21,6 +21,7 @@ import (
 	"reflect"
 
 	"github.com/pkg/errors"
+	apir "k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -165,7 +166,10 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	cr.SetConditions(xpv1.Available())
-	expected := toCloudianQos(cr.Spec.ForProvider)
+	expected, err := toCloudianQos(cr.Spec.ForProvider)
+	if err != nil {
+		return managed.ExternalObservation{}, err
+	}
 
 	return managed.ExternalObservation{
 		// Return false when the external resource does not exist. This lets
@@ -191,7 +195,10 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotGroupQualityOfServiceLimits)
 	}
 
-	qos := toCloudianQos(cr.Spec.ForProvider)
+	qos, err := toCloudianQos(cr.Spec.ForProvider)
+	if err != nil {
+		return managed.ExternalCreation{}, err
+	}
 	user := cloudian.User{
 		GroupID: cr.Spec.ForProvider.GroupID,
 		UserID:  "*",
@@ -213,7 +220,10 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotGroupQualityOfServiceLimits)
 	}
 
-	qos := toCloudianQos(cr.Spec.ForProvider)
+	qos, err := toCloudianQos(cr.Spec.ForProvider)
+	if err != nil {
+		return managed.ExternalUpdate{}, err
+	}
 	user := cloudian.User{
 		GroupID: cr.Spec.ForProvider.GroupID,
 		UserID:  "*",
@@ -254,19 +264,54 @@ func (c *external) Disconnect(ctx context.Context) error {
 	return nil
 }
 
-func toCloudianQos(qos v1alpha1.GroupQualityOfServiceLimitsParameters) cloudian.QualityOfService {
-	return cloudian.QualityOfService{
-		Warning: toCloudianLimits(qos.Warning),
-		Hard:    toCloudianLimits(qos.Hard),
+func toCloudianQos(qos v1alpha1.GroupQualityOfServiceLimitsParameters) (cloudian.QualityOfService, error) {
+	warning, err := toCloudianLimits(qos.Warning)
+	if err != nil {
+		return cloudian.QualityOfService{}, err
 	}
+	high, err := toCloudianLimits(qos.Hard)
+	if err != nil {
+		return cloudian.QualityOfService{}, err
+	}
+	return cloudian.QualityOfService{
+		Warning: warning,
+		Hard:    high,
+	}, nil
 }
 
-func toCloudianLimits(limits v1alpha1.QualityOfServiceLimits) cloudian.QualityOfServiceLimits {
+func toKiB(q *apir.Quantity) (int64, error) {
+	i, ok := q.AsInt64()
+	if !ok {
+		i, ok = q.AsDec().Unscaled()
+		if !ok {
+			return 0, errors.New("Unable to convert quantity to KiB")
+		}
+	}
+	if i > 0 {
+		return i / 1024, nil
+	}
+	return i, nil
+}
+
+func toCloudianLimits(limits v1alpha1.QualityOfServiceLimits) (cloudian.QualityOfServiceLimits, error) {
+	storageQuota, err := toKiB(limits.StorageQuotaBytes)
+	if err != nil {
+		return cloudian.QualityOfServiceLimits{}, err
+	}
+	inboundPerMin, err := toKiB(limits.InboundBytesPerMin)
+	if err != nil {
+		return cloudian.QualityOfServiceLimits{}, err
+	}
+	outboundPerMin, err := toKiB(limits.OutboundBytesPerMin)
+	if err != nil {
+		return cloudian.QualityOfServiceLimits{}, err
+	}
+
 	return cloudian.QualityOfServiceLimits{
-		StorageQuotaKiBs:   limits.StorageQuotaKiBs,
+		StorageQuotaKiBs:   &storageQuota,
 		StorageQuotaCount:  limits.StorageQuotaCount,
 		RequestsPerMin:     limits.RequestsPerMin,
-		InboundKiBsPerMin:  limits.InboundKiBsPerMin,
-		OutboundKiBsPerMin: limits.OutboundKiBsPerMin,
-	}
+		InboundKiBsPerMin:  &inboundPerMin,
+		OutboundKiBsPerMin: &outboundPerMin,
+	}, nil
 }
