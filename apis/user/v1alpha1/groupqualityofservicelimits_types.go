@@ -19,6 +19,7 @@ package v1alpha1
 import (
 	"reflect"
 
+	resource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -27,48 +28,53 @@ import (
 
 // QualityOfService configures data limits. The value -1 indicates unlimited.
 type QualityOfServiceLimits struct {
-	// StorageQuotaKiBs is the limit for total stored data in KiB.
+	// StorageQuotaBytes is the limit for total stored data in KiB.
+	//+kubebuilder:validation:XValidation:rule="(self == 0 || self == -1 || self == \"0\" || self == \"-1\" || self >= 1024) || type(self) == string && isQuantity(self) && quantity(self).isGreaterThan(quantity(\"1Ki\"))", message="storageQuotaBytes must be -1, 0, or > 1Ki."
 	//+kubebuilder:default=-1
-	StorageQuotaKiBs *int64 `json:"storageQuotaKiBs,omitempty"`
+	StorageQuotaBytes *resource.Quantity `json:"storageQuotaBytes,omitempty"`
 	// StorageQuotaCount is the limit for total number of objects.
 	//+kubebuilder:default=-1
 	StorageQuotaCount *int64 `json:"storageQuotaCount,omitempty"`
 	// RequestsPerMin is the limit for number of HTTP requests per minute.
 	//+kubebuilder:default=-1
 	RequestsPerMin *int64 `json:"requestsPerMin,omitempty"`
-	// InboundKiBsPerMin is the limit for inbound data per minute in KiB.
+	// InboundBytesPerMin is the limit for inbound data per minute in KiB.
 	//+kubebuilder:default=-1
-	InboundKiBsPerMin *int64 `json:"inboundKiBsPerMin,omitempty"`
+	//+kubebuilder:validation:XValidation:rule="(self == 0 || self == -1 || self == \"0\" || self == \"-1\" || self >= 1024) || type(self) == string && isQuantity(self) && quantity(self).isGreaterThan(quantity(\"1Ki\"))", message="inboundBytesPerMin must be -1, 0, or > 1Ki."
+	InboundBytesPerMin *resource.Quantity `json:"inboundBytesPerMin,omitempty"`
 	// OutboundKiBsPerMin is the limit for outbound data per minute in KiB.
 	//+kubebuilder:default=-1
-	OutboundKiBsPerMin *int64 `json:"outboundKiBsPerMin,omitempty"`
+	//+kubebuilder:validation:XValidation:rule="(self == 0 || self == -1 || self == \"0\" || self == \"-1\" || self >= 1024) || type(self) == string && isQuantity(self) && quantity(self).isGreaterThan(quantity(\"1Ki\"))", message="outboundBytesPerMin must be -1, 0, or > 1Ki."
+	OutboundBytesPerMin *resource.Quantity `json:"outboundBytesPerMin,omitempty"`
 }
 
 // GroupQualityOfServiceLimitsParameters are the configurable fields of a GroupQualityOfServiceLimits.
 type GroupQualityOfServiceLimitsParameters struct {
 	// Group for the quality of service limits.
-	// +optional
-	// +immutable
+	//+optional
+	//+immutable
 	GroupID string `json:"groupId,omitempty"`
 
 	// GroupIDRef is a reference to a group to retrieve its groupId.
-	// +optional
-	// +immutable
+	//+optional
+	//+immutable
 	GroupIDRef *xpv1.Reference `json:"groupIdRef,omitempty"`
 
 	// GroupIDSelector selects reference to a group to retrieve its groupId.
-	// +optional
+	//+optional
 	GroupIDSelector *xpv1.Selector `json:"groupIdSelector,omitempty"`
 
 	// Region in which to apply the quality of service limits. Default region if unspecified.
 	Region string `json:"region,omitempty"`
 
 	// Warning is the soft limit that triggers a warning.
-	// +optional
+	//+optional
+	//+kubebuilder:default={}
 	Warning QualityOfServiceLimits `json:"warning"`
 
 	// Hard is the hard limit.
-	// +optional
+	//+optional
+	//+kubebuilder:default={}
 	Hard QualityOfServiceLimits `json:"hard"`
 }
 

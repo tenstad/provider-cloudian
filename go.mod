@@ -9,7 +9,7 @@ require (
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/google/go-cmp v0.6.0
 	github.com/pkg/errors v0.9.1
-	k8s.io/apimachinery v0.32.1
+	k8s.io/apimachinery v0.33.0-alpha.0
 	k8s.io/client-go v0.32.1
 	k8s.io/utils v0.0.0-20241210054802-24370beab758
 	sigs.k8s.io/controller-runtime v0.20.1
