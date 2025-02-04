@@ -70,12 +70,12 @@ type GroupQualityOfServiceLimitsParameters struct {
 	// Warning is the soft limit that triggers a warning.
 	//+optional
 	//+kubebuilder:default={}
-	Warning QualityOfServiceLimits `json:"warning"`
+	Warning *QualityOfServiceLimits `json:"warning,omitempty"`
 
 	// Hard is the hard limit.
 	//+optional
 	//+kubebuilder:default={}
-	Hard QualityOfServiceLimits `json:"hard"`
+	Hard *QualityOfServiceLimits `json:"hard,omitempty"`
 }
 
 // GroupQualityOfServiceLimitsObservation are the observable fields of a GroupQualityOfServiceLimits.
