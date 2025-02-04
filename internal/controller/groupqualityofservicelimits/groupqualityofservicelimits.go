@@ -18,7 +18,6 @@ package groupqualityofservicelimits
 
 import (
 	"context"
-	"reflect"
 
 	"github.com/pkg/errors"
 	apir "k8s.io/apimachinery/pkg/api/resource"
@@ -180,8 +179,8 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		// Return false when the external resource exists, but it not up to date
 		// with the desired managed resource state. This lets the managed
 		// resource reconciler know that it needs to call Update.
-		ResourceUpToDate: reflect.DeepEqual(expected.Warning, qos.Warning) &&
-			reflect.DeepEqual(expected.Hard, qos.Hard),
+		ResourceUpToDate: limitsEqual(expected.Warning, qos.Warning) &&
+			limitsEqual(expected.Hard, qos.Hard),
 
 		// Return any details that may be required to connect to the external
 		// resource. These will be stored as the connection secret.
@@ -314,4 +313,16 @@ func toCloudianLimits(limits v1alpha1.QualityOfServiceLimits) (cloudian.QualityO
 		InboundKiBsPerMin:  &inboundPerMin,
 		OutboundKiBsPerMin: &outboundPerMin,
 	}, nil
+}
+
+func limitsEqual(a cloudian.QualityOfServiceLimits, b cloudian.QualityOfServiceLimits) bool {
+	eq := func(a *int64, b *int64) bool {
+		return (a == b) || (a != nil && b != nil && *a == *b)
+	}
+
+	return eq(a.InboundKiBsPerMin, b.InboundKiBsPerMin) &&
+		eq(a.OutboundKiBsPerMin, b.OutboundKiBsPerMin) &&
+		eq(a.RequestsPerMin, b.RequestsPerMin) &&
+		eq(a.StorageQuotaCount, b.StorageQuotaCount) &&
+		eq(a.StorageQuotaKiBs, b.StorageQuotaKiBs)
 }
