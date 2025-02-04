@@ -146,13 +146,13 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotGroupQualityOfServiceLimits)
 	}
 
-	group := cr.Spec.ForProvider.GroupID
-	if group == "" {
+	groupID := cr.Spec.ForProvider.GroupID
+	if groupID == "" {
 		return managed.ExternalObservation{}, nil
 	}
 
 	user := cloudian.User{
-		GroupID: group,
+		GroupID: groupID,
 		UserID:  "*",
 	}
 	qos, err := c.cloudianService.GetQOS(ctx, user, cr.Spec.ForProvider.Region)
