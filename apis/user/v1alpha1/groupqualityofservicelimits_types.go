@@ -23,7 +23,6 @@ import (
 	resource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/utils/ptr"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 )
@@ -33,7 +32,7 @@ type Quantity string
 
 func (q *Quantity) ToKiB() (*int64, error) {
 	if q == nil {
-		return ptr.To(int64(-1)), nil
+		return nil, nil
 	}
 
 	rq, err := resource.ParseQuantity(string(*q))
