@@ -278,38 +278,66 @@ func toCloudianQos(qos v1alpha1.GroupQualityOfServiceLimitsParameters) (cloudian
 	}, nil
 }
 
-func toKiB(q *apir.Quantity) (int64, error) {
+func toScalar(s string) (int64, error) {
+	if s == "Unlimited" {
+		return -1, nil
+	}
+
+	q, err := apir.ParseQuantity(s)
+	if err != nil {
+		return 0, err
+	}
+
 	i, ok := q.AsInt64()
 	if !ok {
 		i, ok = q.AsDec().Unscaled()
 		if !ok {
-			return 0, errors.New("Unable to convert quantity to KiB")
+			return 0, errors.New("Unable to convert quantity to scalar")
 		}
 	}
-	if i > 0 {
-		return i / 1024, nil
-	}
+
 	return i, nil
 }
 
 func toCloudianLimits(limits *v1alpha1.QualityOfServiceLimits) (cloudian.QualityOfServiceLimits, error) {
-	storageQuota, err := toKiB(limits.StorageQuotaBytes)
+	storageQuota, err := toScalar(*limits.StorageQuotaBytes)
 	if err != nil {
 		return cloudian.QualityOfServiceLimits{}, err
 	}
-	inboundPerMin, err := toKiB(limits.InboundBytesPerMin)
+	if storageQuota > 0 {
+		storageQuota /= 1024
+	}
+
+	inboundPerMin, err := toScalar(*limits.InboundBytesPerMin)
 	if err != nil {
 		return cloudian.QualityOfServiceLimits{}, err
 	}
-	outboundPerMin, err := toKiB(limits.OutboundBytesPerMin)
+	if inboundPerMin > 0 {
+		inboundPerMin /= 1024
+	}
+
+	outboundPerMin, err := toScalar(*limits.OutboundBytesPerMin)
+	if err != nil {
+		return cloudian.QualityOfServiceLimits{}, err
+	}
+	if outboundPerMin > 0 {
+		outboundPerMin /= 1024
+	}
+
+	storageQuotaCount, err := toScalar(*limits.StorageQuotaCount)
+	if err != nil {
+		return cloudian.QualityOfServiceLimits{}, err
+	}
+
+	requestsPerMin, err := toScalar(*limits.RequestsPerMin)
 	if err != nil {
 		return cloudian.QualityOfServiceLimits{}, err
 	}
 
 	return cloudian.QualityOfServiceLimits{
 		StorageQuotaKiBs:   &storageQuota,
-		StorageQuotaCount:  limits.StorageQuotaCount,
-		RequestsPerMin:     limits.RequestsPerMin,
+		StorageQuotaCount:  &storageQuotaCount,
+		RequestsPerMin:     &requestsPerMin,
 		InboundKiBsPerMin:  &inboundPerMin,
 		OutboundKiBsPerMin: &outboundPerMin,
 	}, nil

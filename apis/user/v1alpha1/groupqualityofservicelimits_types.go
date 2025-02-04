@@ -19,7 +19,6 @@ package v1alpha1
 import (
 	"reflect"
 
-	resource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -29,23 +28,28 @@ import (
 // QualityOfService configures data limits. The value -1 indicates unlimited.
 type QualityOfServiceLimits struct {
 	// StorageQuotaBytes is the limit for total stored data in KiB.
-	//+kubebuilder:validation:XValidation:rule="(self == 0 || self == -1 || self == \"0\" || self == \"-1\" || self >= 1024) || type(self) == string && isQuantity(self) && quantity(self).isGreaterThan(quantity(\"1Ki\"))", message="storageQuotaBytes must be -1, 0, or > 1Ki."
-	//+kubebuilder:default=-1
-	StorageQuotaBytes *resource.Quantity `json:"storageQuotaBytes,omitempty"`
+	//+kubebuilder:validation:XValidation:rule="self == \"Unlimited\" || self == \"0\" || isQuantity(self) && quantity(self).isGreaterThan(quantity(\"1Ki\"))", message="storageQuotaBytes must be Unlimited, 0, or > 1Ki."
+	//+kubebuilder:validation:Pattern=`^(Unlimited|(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGT]i)|[kMGT])?)$`
+	//+kubebuilder:default=Unlimited
+	StorageQuotaBytes *string `json:"storageQuotaBytes,omitempty"`
 	// StorageQuotaCount is the limit for total number of objects.
-	//+kubebuilder:default=-1
-	StorageQuotaCount *int64 `json:"storageQuotaCount,omitempty"`
+	//+kubebuilder:validation:Pattern=`^(Unlimited|(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGT]i)|[kMGT])?)$`
+	//+kubebuilder:default=Unlimited
+	StorageQuotaCount *string `json:"storageQuotaCount,omitempty"`
 	// RequestsPerMin is the limit for number of HTTP requests per minute.
-	//+kubebuilder:default=-1
-	RequestsPerMin *int64 `json:"requestsPerMin,omitempty"`
+	//+kubebuilder:validation:Pattern=`^(Unlimited|(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGT]i)|[kMGT])?)$`
+	//+kubebuilder:default=Unlimited
+	RequestsPerMin *string `json:"requestsPerMin,omitempty"`
 	// InboundBytesPerMin is the limit for inbound data per minute in KiB.
-	//+kubebuilder:default=-1
-	//+kubebuilder:validation:XValidation:rule="(self == 0 || self == -1 || self == \"0\" || self == \"-1\" || self >= 1024) || type(self) == string && isQuantity(self) && quantity(self).isGreaterThan(quantity(\"1Ki\"))", message="inboundBytesPerMin must be -1, 0, or > 1Ki."
-	InboundBytesPerMin *resource.Quantity `json:"inboundBytesPerMin,omitempty"`
+	//+kubebuilder:default=Unlimited
+	//+kubebuilder:validation:Pattern=`^(Unlimited|(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGT]i)|[kMGT])?)$`
+	//+kubebuilder:validation:XValidation:rule="self == \"Unlimited\" || self == \"0\" || isQuantity(self) && quantity(self).isGreaterThan(quantity(\"1Ki\"))", message="inboundBytesPerMin must be Unlimited, 0, or > 1Ki."
+	InboundBytesPerMin *string `json:"inboundBytesPerMin,omitempty"`
 	// OutboundKiBsPerMin is the limit for outbound data per minute in KiB.
-	//+kubebuilder:default=-1
-	//+kubebuilder:validation:XValidation:rule="(self == 0 || self == -1 || self == \"0\" || self == \"-1\" || self >= 1024) || type(self) == string && isQuantity(self) && quantity(self).isGreaterThan(quantity(\"1Ki\"))", message="outboundBytesPerMin must be -1, 0, or > 1Ki."
-	OutboundBytesPerMin *resource.Quantity `json:"outboundBytesPerMin,omitempty"`
+	//+kubebuilder:default=Unlimited
+	//+kubebuilder:validation:Pattern=`^(Unlimited|(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGT]i)|[kMGT])?)$`
+	//+kubebuilder:validation:XValidation:rule="self == \"Unlimited\" || self == \"0\" || isQuantity(self) && quantity(self).isGreaterThan(quantity(\"1Ki\"))", message="outboundBytesPerMin must be Unlimited, 0, or > 1Ki."
+	OutboundBytesPerMin *string `json:"outboundBytesPerMin,omitempty"`
 }
 
 // GroupQualityOfServiceLimitsParameters are the configurable fields of a GroupQualityOfServiceLimits.

@@ -464,28 +464,28 @@ func (in *QualityOfServiceLimits) DeepCopyInto(out *QualityOfServiceLimits) {
 	*out = *in
 	if in.StorageQuotaBytes != nil {
 		in, out := &in.StorageQuotaBytes, &out.StorageQuotaBytes
-		x := (*in).DeepCopy()
-		*out = &x
+		*out = new(string)
+		**out = **in
 	}
 	if in.StorageQuotaCount != nil {
 		in, out := &in.StorageQuotaCount, &out.StorageQuotaCount
-		*out = new(int64)
+		*out = new(string)
 		**out = **in
 	}
 	if in.RequestsPerMin != nil {
 		in, out := &in.RequestsPerMin, &out.RequestsPerMin
-		*out = new(int64)
+		*out = new(string)
 		**out = **in
 	}
 	if in.InboundBytesPerMin != nil {
 		in, out := &in.InboundBytesPerMin, &out.InboundBytesPerMin
-		x := (*in).DeepCopy()
-		*out = &x
+		*out = new(string)
+		**out = **in
 	}
 	if in.OutboundBytesPerMin != nil {
 		in, out := &in.OutboundBytesPerMin, &out.OutboundBytesPerMin
-		x := (*in).DeepCopy()
-		*out = &x
+		*out = new(string)
+		**out = **in
 	}
 }
 
