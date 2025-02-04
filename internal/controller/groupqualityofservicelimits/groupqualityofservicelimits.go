@@ -292,7 +292,7 @@ func toKiB(q *apir.Quantity) (int64, error) {
 	return i, nil
 }
 
-func toCloudianLimits(limits v1alpha1.QualityOfServiceLimits) (cloudian.QualityOfServiceLimits, error) {
+func toCloudianLimits(limits *v1alpha1.QualityOfServiceLimits) (cloudian.QualityOfServiceLimits, error) {
 	storageQuota, err := toKiB(limits.StorageQuotaBytes)
 	if err != nil {
 		return cloudian.QualityOfServiceLimits{}, err
