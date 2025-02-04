@@ -31,6 +31,18 @@ type QualityOfServiceLimits struct {
 	OutboundKiBsPerMin *int64
 }
 
+func (qos *QualityOfService) allMinusOne() bool {
+	return qos.Warning.allMinusOne() && qos.Hard.allMinusOne()
+}
+
+func (l *QualityOfServiceLimits) allMinusOne() bool {
+	return (l.StorageQuotaKiBs == nil || *l.StorageQuotaKiBs == -1) &&
+		(l.StorageQuotaCount == nil || *l.StorageQuotaCount == -1) &&
+		(l.RequestsPerMin == nil || *l.RequestsPerMin == -1) &&
+		(l.InboundKiBsPerMin == nil || *l.InboundKiBsPerMin == -1) &&
+		(l.OutboundKiBsPerMin == nil || *l.OutboundKiBsPerMin == -1)
+}
+
 // nolint: gocyclo
 func (qos *QualityOfService) unmarshalQOSList(raw []byte) error {
 	var data struct {
@@ -72,8 +84,8 @@ func (qos *QualityOfService) unmarshalQOSList(raw []byte) error {
 	return nil
 }
 
-func (qos *QualityOfService) queryParams(params map[string]string) error {
-	rawParams := map[string]*int64{
+func (qos *QualityOfService) rawQueryParams() map[string]*int64 {
+	return map[string]*int64{
 		"hlStorageQuotaKBytes": qos.Hard.StorageQuotaKiBs,
 		"wlStorageQuotaKBytes": qos.Warning.StorageQuotaKiBs,
 		"hlStorageQuotaCount":  qos.Hard.StorageQuotaCount,
@@ -85,14 +97,13 @@ func (qos *QualityOfService) queryParams(params map[string]string) error {
 		"hlDataKBytesOut":      qos.Hard.OutboundKiBsPerMin,
 		"wlDataKBytesOut":      qos.Warning.OutboundKiBsPerMin,
 	}
+}
 
-	for key, raw := range rawParams {
+func (qos *QualityOfService) queryParams(params map[string]string) error {
+	for key, raw := range qos.rawQueryParams() {
 		val := int64(-1)
 		if raw != nil {
 			val = *raw
-		}
-		if val < -1 {
-			return fmt.Errorf("invalid QoS limit value: %d", val)
 		}
 		params[key] = strconv.FormatInt(val, 10)
 	}
@@ -107,6 +118,17 @@ func (qos *QualityOfService) queryParams(params map[string]string) error {
 // Group-level QoS for a specific group (GroupID="<groupId>", UserID="*")
 // Default group-level QoS for the whole region (GroupID="ALL", UserID="*")
 func (client Client) SetQOS(ctx context.Context, user User, region string, qos QualityOfService) error {
+	for _, val := range qos.rawQueryParams() {
+		if val != nil && *val < -1 {
+			return fmt.Errorf("QoS limit values must be >= -1")
+		}
+	}
+
+	if qos.allMinusOne() {
+		existanceMarker := int64(-2)
+		qos.Warning.RequestsPerMin = &existanceMarker
+	}
+
 	params := make(map[string]string)
 	if err := qos.queryParams(params); err != nil {
 		return err
@@ -153,7 +175,20 @@ func (client Client) GetQOS(ctx context.Context, user User, region string) (*Qua
 	switch resp.StatusCode() {
 	case 200:
 		qos := &QualityOfService{}
-		return qos, qos.unmarshalQOSList(resp.Body())
+		if err := qos.unmarshalQOSList(resp.Body()); err != nil {
+			return nil, err
+		}
+
+		if qos.allMinusOne() {
+			return nil, ErrNotFound
+		}
+		if qos.Warning.RequestsPerMin != nil &&
+			*qos.Warning.RequestsPerMin == -2 {
+			unlimited := int64(-1)
+			qos.Warning.RequestsPerMin = &unlimited
+		}
+
+		return qos, nil
 	default:
 		return nil, fmt.Errorf("GET quota unexpected status: %d", resp.StatusCode())
 	}
