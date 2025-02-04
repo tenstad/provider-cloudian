@@ -156,7 +156,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		UserID:  "*",
 	}
 	qos, err := c.cloudianService.GetQOS(ctx, user, cr.Spec.ForProvider.Region)
-	// For consistency/futureproofing - API currently returns ok with all limits as -1 for non-existent groups
+
 	if errors.Is(err, cloudian.ErrNotFound) {
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
@@ -251,7 +251,6 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		UserID:  "*",
 	}
 	err := c.cloudianService.DeleteQOS(ctx, user, cr.Spec.ForProvider.Region)
-	// For consistency/futureproofing - API currently returns ok for non-existent groups
 	if err != nil && !errors.Is(err, cloudian.ErrNotFound) {
 		return managed.ExternalDelete{}, errors.Wrap(err, errGetCreds)
 	}
