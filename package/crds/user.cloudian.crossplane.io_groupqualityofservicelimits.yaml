@@ -155,62 +155,32 @@ spec:
                         type: object
                     type: object
                   hard:
-                    default: {}
                     description: Hard is the hard limit.
                     properties:
                       inboundBytesPerMin:
-                        anyOf:
-                        - type: integer
-                        - type: string
-                        default: -1
                         description: InboundBytesPerMin is the limit for inbound data
                           per minute in KiB.
-                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                        x-kubernetes-int-or-string: true
-                        x-kubernetes-validations:
-                        - message: inboundBytesPerMin must be -1, 0, or > 1Ki.
-                          rule: (self == 0 || self == -1 || self == "0" || self ==
-                            "-1" || self >= 1024) || type(self) == string && isQuantity(self)
-                            && quantity(self).isGreaterThan(quantity("1Ki"))
+                        pattern: ^(0|((0|[1-9][0-9]*)[KMGT]i))$
+                        type: string
                       outboundBytesPerMin:
-                        anyOf:
-                        - type: integer
-                        - type: string
-                        default: -1
                         description: OutboundKiBsPerMin is the limit for outbound
                           data per minute in KiB.
-                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                        x-kubernetes-int-or-string: true
-                        x-kubernetes-validations:
-                        - message: outboundBytesPerMin must be -1, 0, or > 1Ki.
-                          rule: (self == 0 || self == -1 || self == "0" || self ==
-                            "-1" || self >= 1024) || type(self) == string && isQuantity(self)
-                            && quantity(self).isGreaterThan(quantity("1Ki"))
+                        pattern: ^(0|((0|[1-9][0-9]*)[KMGT]i))$
+                        type: string
                       requestsPerMin:
-                        default: -1
                         description: RequestsPerMin is the limit for number of HTTP
                           requests per minute.
-                        format: int64
+                        format: int32
                         type: integer
                       storageQuotaBytes:
-                        anyOf:
-                        - type: integer
-                        - type: string
-                        default: -1
                         description: StorageQuotaBytes is the limit for total stored
                           data in KiB.
-                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                        x-kubernetes-int-or-string: true
-                        x-kubernetes-validations:
-                        - message: storageQuotaBytes must be -1, 0, or > 1Ki.
-                          rule: (self == 0 || self == -1 || self == "0" || self ==
-                            "-1" || self >= 1024) || type(self) == string && isQuantity(self)
-                            && quantity(self).isGreaterThan(quantity("1Ki"))
+                        pattern: ^(0|((0|[1-9][0-9]*)[KMGT]i))$
+                        type: string
                       storageQuotaCount:
-                        default: -1
                         description: StorageQuotaCount is the limit for total number
                           of objects.
-                        format: int64
+                        format: int32
                         type: integer
                     type: object
                   region:
@@ -218,62 +188,32 @@ spec:
                       Default region if unspecified.
                     type: string
                   warning:
-                    default: {}
                     description: Warning is the soft limit that triggers a warning.
                     properties:
                       inboundBytesPerMin:
-                        anyOf:
-                        - type: integer
-                        - type: string
-                        default: -1
                         description: InboundBytesPerMin is the limit for inbound data
                           per minute in KiB.
-                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                        x-kubernetes-int-or-string: true
-                        x-kubernetes-validations:
-                        - message: inboundBytesPerMin must be -1, 0, or > 1Ki.
-                          rule: (self == 0 || self == -1 || self == "0" || self ==
-                            "-1" || self >= 1024) || type(self) == string && isQuantity(self)
-                            && quantity(self).isGreaterThan(quantity("1Ki"))
+                        pattern: ^(0|((0|[1-9][0-9]*)[KMGT]i))$
+                        type: string
                       outboundBytesPerMin:
-                        anyOf:
-                        - type: integer
-                        - type: string
-                        default: -1
                         description: OutboundKiBsPerMin is the limit for outbound
                           data per minute in KiB.
-                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                        x-kubernetes-int-or-string: true
-                        x-kubernetes-validations:
-                        - message: outboundBytesPerMin must be -1, 0, or > 1Ki.
-                          rule: (self == 0 || self == -1 || self == "0" || self ==
-                            "-1" || self >= 1024) || type(self) == string && isQuantity(self)
-                            && quantity(self).isGreaterThan(quantity("1Ki"))
+                        pattern: ^(0|((0|[1-9][0-9]*)[KMGT]i))$
+                        type: string
                       requestsPerMin:
-                        default: -1
                         description: RequestsPerMin is the limit for number of HTTP
                           requests per minute.
-                        format: int64
+                        format: int32
                         type: integer
                       storageQuotaBytes:
-                        anyOf:
-                        - type: integer
-                        - type: string
-                        default: -1
                         description: StorageQuotaBytes is the limit for total stored
                           data in KiB.
-                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                        x-kubernetes-int-or-string: true
-                        x-kubernetes-validations:
-                        - message: storageQuotaBytes must be -1, 0, or > 1Ki.
-                          rule: (self == 0 || self == -1 || self == "0" || self ==
-                            "-1" || self >= 1024) || type(self) == string && isQuantity(self)
-                            && quantity(self).isGreaterThan(quantity("1Ki"))
+                        pattern: ^(0|((0|[1-9][0-9]*)[KMGT]i))$
+                        type: string
                       storageQuotaCount:
-                        default: -1
                         description: StorageQuotaCount is the limit for total number
                           of objects.
-                        format: int64
+                        format: int32
                         type: integer
                     type: object
                 type: object

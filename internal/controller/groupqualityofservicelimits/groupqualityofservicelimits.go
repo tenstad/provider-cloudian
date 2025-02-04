@@ -20,8 +20,8 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-	apir "k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -278,40 +278,39 @@ func toCloudianQos(qos v1alpha1.GroupQualityOfServiceLimitsParameters) (cloudian
 	}, nil
 }
 
-func toKiB(q *apir.Quantity) (int64, error) {
-	i, ok := q.AsInt64()
-	if !ok {
-		i, ok = q.AsDec().Unscaled()
-		if !ok {
-			return 0, errors.New("Unable to convert quantity to KiB")
-		}
-	}
-	if i > 0 {
-		return i / 1024, nil
-	}
-	return i, nil
-}
-
 func toCloudianLimits(limits *v1alpha1.QualityOfServiceLimits) (cloudian.QualityOfServiceLimits, error) {
-	storageQuota, err := toKiB(limits.StorageQuotaBytes)
+	if limits == nil {
+		return cloudian.QualityOfServiceLimits{}, nil
+	}
+
+	storageQuota, err := limits.StorageQuotaBytes.ToKiB()
 	if err != nil {
 		return cloudian.QualityOfServiceLimits{}, err
 	}
-	inboundPerMin, err := toKiB(limits.InboundBytesPerMin)
+	inboundPerMin, err := limits.InboundBytesPerMin.ToKiB()
 	if err != nil {
 		return cloudian.QualityOfServiceLimits{}, err
 	}
-	outboundPerMin, err := toKiB(limits.OutboundBytesPerMin)
+	outboundPerMin, err := limits.OutboundBytesPerMin.ToKiB()
 	if err != nil {
 		return cloudian.QualityOfServiceLimits{}, err
+	}
+
+	var storageQuotaCount *int64
+	if limits.StorageQuotaCount != nil {
+		storageQuotaCount = ptr.To(int64(*limits.StorageQuotaCount))
+	}
+	var requestsPerMin *int64
+	if limits.RequestsPerMin != nil {
+		requestsPerMin = ptr.To(int64(*limits.RequestsPerMin))
 	}
 
 	return cloudian.QualityOfServiceLimits{
-		StorageQuotaKiBs:   &storageQuota,
-		StorageQuotaCount:  limits.StorageQuotaCount,
-		RequestsPerMin:     limits.RequestsPerMin,
-		InboundKiBsPerMin:  &inboundPerMin,
-		OutboundKiBsPerMin: &outboundPerMin,
+		StorageQuotaKiBs:   storageQuota,
+		StorageQuotaCount:  storageQuotaCount,
+		RequestsPerMin:     requestsPerMin,
+		InboundKiBsPerMin:  inboundPerMin,
+		OutboundKiBsPerMin: outboundPerMin,
 	}, nil
 }
 
