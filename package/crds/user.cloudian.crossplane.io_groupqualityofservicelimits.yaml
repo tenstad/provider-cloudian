@@ -159,12 +159,12 @@ spec:
                     properties:
                       inboundBytesPerMin:
                         description: InboundBytesPerMin is the limit for inbound data
-                          per minute in KiB.
+                          per minute in bytes.
                         pattern: ^(0|((0|[1-9][0-9]*)[KMGT]i))$
                         type: string
                       outboundBytesPerMin:
                         description: OutboundKiBsPerMin is the limit for outbound
-                          data per minute in KiB.
+                          data per minute in bytes.
                         pattern: ^(0|((0|[1-9][0-9]*)[KMGT]i))$
                         type: string
                       requestsPerMin:
@@ -174,7 +174,7 @@ spec:
                         type: integer
                       storageQuotaBytes:
                         description: StorageQuotaBytes is the limit for total stored
-                          data in KiB.
+                          data in bytes.
                         pattern: ^(0|((0|[1-9][0-9]*)[KMGT]i))$
                         type: string
                       storageQuotaCount:
@@ -192,12 +192,12 @@ spec:
                     properties:
                       inboundBytesPerMin:
                         description: InboundBytesPerMin is the limit for inbound data
-                          per minute in KiB.
+                          per minute in bytes.
                         pattern: ^(0|((0|[1-9][0-9]*)[KMGT]i))$
                         type: string
                       outboundBytesPerMin:
                         description: OutboundKiBsPerMin is the limit for outbound
-                          data per minute in KiB.
+                          data per minute in bytes.
                         pattern: ^(0|((0|[1-9][0-9]*)[KMGT]i))$
                         type: string
                       requestsPerMin:
@@ -207,7 +207,7 @@ spec:
                         type: integer
                       storageQuotaBytes:
                         description: StorageQuotaBytes is the limit for total stored
-                          data in KiB.
+                          data in bytes.
                         pattern: ^(0|((0|[1-9][0-9]*)[KMGT]i))$
                         type: string
                       storageQuotaCount:

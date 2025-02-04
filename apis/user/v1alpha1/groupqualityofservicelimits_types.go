@@ -55,7 +55,7 @@ func (q *Quantity) ToKiB() (*int64, error) {
 
 // QualityOfService configures data limits. The value -1 indicates unlimited.
 type QualityOfServiceLimits struct {
-	// StorageQuotaBytes is the limit for total stored data in KiB.
+	// StorageQuotaBytes is the limit for total stored data in bytes.
 	//+optional
 	StorageQuotaBytes *Quantity `json:"storageQuotaBytes,omitempty"`
 	// StorageQuotaCount is the limit for total number of objects.
@@ -64,10 +64,10 @@ type QualityOfServiceLimits struct {
 	// RequestsPerMin is the limit for number of HTTP requests per minute.
 	//+optional
 	RequestsPerMin *uint32 `json:"requestsPerMin,omitempty"`
-	// InboundBytesPerMin is the limit for inbound data per minute in KiB.
+	// InboundBytesPerMin is the limit for inbound data per minute in bytes.
 	//+optional
 	InboundBytesPerMin *Quantity `json:"inboundBytesPerMin,omitempty"`
-	// OutboundKiBsPerMin is the limit for outbound data per minute in KiB.
+	// OutboundKiBsPerMin is the limit for outbound data per minute in bytes.
 	//+optional
 	OutboundBytesPerMin *Quantity `json:"outboundBytesPerMin,omitempty"`
 }
