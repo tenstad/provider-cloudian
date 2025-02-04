@@ -165,6 +165,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	cr.SetConditions(xpv1.Available())
+
 	expected, err := toCloudianQos(cr.Spec.ForProvider)
 	if err != nil {
 		return managed.ExternalObservation{}, err
@@ -198,6 +199,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	if err != nil {
 		return managed.ExternalCreation{}, err
 	}
+
 	user := cloudian.User{
 		GroupID: cr.Spec.ForProvider.GroupID,
 		UserID:  "*",
@@ -223,6 +225,7 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 	if err != nil {
 		return managed.ExternalUpdate{}, err
 	}
+
 	user := cloudian.User{
 		GroupID: cr.Spec.ForProvider.GroupID,
 		UserID:  "*",
@@ -282,35 +285,27 @@ func toCloudianLimits(limits *v1alpha1.QualityOfServiceLimits) (cloudian.Quality
 		return cloudian.QualityOfServiceLimits{}, nil
 	}
 
-	storageQuota, err := limits.StorageQuotaBytes.ToKiB()
-	if err != nil {
+	var err error
+	qosl := cloudian.QualityOfServiceLimits{}
+
+	if qosl.StorageQuotaKiBs, err = limits.StorageQuotaBytes.ToKiB(); err != nil {
 		return cloudian.QualityOfServiceLimits{}, err
 	}
-	inboundPerMin, err := limits.InboundBytesPerMin.ToKiB()
-	if err != nil {
+	if qosl.InboundKiBsPerMin, err = limits.InboundBytesPerMin.ToKiB(); err != nil {
 		return cloudian.QualityOfServiceLimits{}, err
 	}
-	outboundPerMin, err := limits.OutboundBytesPerMin.ToKiB()
-	if err != nil {
+	if qosl.OutboundKiBsPerMin, err = limits.OutboundBytesPerMin.ToKiB(); err != nil {
 		return cloudian.QualityOfServiceLimits{}, err
 	}
 
-	var storageQuotaCount *int64
 	if limits.StorageQuotaCount != nil {
-		storageQuotaCount = ptr.To(int64(*limits.StorageQuotaCount))
+		qosl.StorageQuotaCount = ptr.To(int64(*limits.StorageQuotaCount))
 	}
-	var requestsPerMin *int64
 	if limits.RequestsPerMin != nil {
-		requestsPerMin = ptr.To(int64(*limits.RequestsPerMin))
+		qosl.RequestsPerMin = ptr.To(int64(*limits.RequestsPerMin))
 	}
 
-	return cloudian.QualityOfServiceLimits{
-		StorageQuotaKiBs:   storageQuota,
-		StorageQuotaCount:  storageQuotaCount,
-		RequestsPerMin:     requestsPerMin,
-		InboundKiBsPerMin:  inboundPerMin,
-		OutboundKiBsPerMin: outboundPerMin,
-	}, nil
+	return qosl, nil
 }
 
 func limitsEqual(a cloudian.QualityOfServiceLimits, b cloudian.QualityOfServiceLimits) bool {
