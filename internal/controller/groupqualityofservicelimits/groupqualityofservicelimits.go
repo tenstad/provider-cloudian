@@ -152,7 +152,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	user := cloudian.User{
-		GroupID: cr.Spec.ForProvider.GroupID,
+		GroupID: group,
 		UserID:  "*",
 	}
 	qos, err := c.cloudianService.GetQOS(ctx, user, cr.Spec.ForProvider.Region)
