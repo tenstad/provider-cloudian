@@ -22,6 +22,7 @@ import (
 	"github.com/pkg/errors"
 	apir "k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -59,6 +60,14 @@ var (
 			authHeader,
 			cloudian.WithInsecureTLSVerify(true),
 		), nil
+	}
+
+	noLimit = cloudian.QualityOfServiceLimits{
+		StorageQuotaKiBs:   ptr.To(int64(-1)),
+		StorageQuotaCount:  ptr.To(int64(-1)),
+		RequestsPerMin:     ptr.To(int64(-1)),
+		InboundKiBsPerMin:  ptr.To(int64(-1)),
+		OutboundKiBsPerMin: ptr.To(int64(-1)),
 	}
 )
 
@@ -156,8 +165,9 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		UserID:  "*",
 	}
 	qos, err := c.cloudianService.GetQOS(ctx, user, cr.Spec.ForProvider.Region)
-	// For consistency/futureproofing - API currently returns ok with all limits as -1 for non-existent groups
-	if errors.Is(err, cloudian.ErrNotFound) {
+
+	// API returns ok with all limits as -1 for non-existent groups
+	if limitsEqual(qos.Warning, noLimit) && limitsEqual(qos.Hard, noLimit) {
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 	if err != nil {
@@ -272,10 +282,18 @@ func toCloudianQos(qos v1alpha1.GroupQualityOfServiceLimitsParameters) (cloudian
 	if err != nil {
 		return cloudian.QualityOfService{}, err
 	}
-	return cloudian.QualityOfService{
+	cQOS := cloudian.QualityOfService{
 		Warning: warning,
 		Hard:    high,
-	}, nil
+	}
+
+	if limitsEqual(cQOS.Warning, noLimit) && limitsEqual(cQOS.Hard, noLimit) {
+		// Need to have at least one limit to know if resource exists in the API
+		if ptr.Deref(cQOS.Warning.InboundKiBsPerMin, -1) == -1 {
+			cQOS.Warning.InboundKiBsPerMin = ptr.To(int64(1024 * 1024 * 1024))
+		}
+	}
+	return cQOS, nil
 }
 
 func toKiB(q *apir.Quantity) (int64, error) {
