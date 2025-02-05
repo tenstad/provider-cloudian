@@ -309,13 +309,9 @@ func toCloudianLimits(limits *v1alpha1.QualityOfServiceLimits) (cloudian.Quality
 }
 
 func limitsEqual(a cloudian.QualityOfServiceLimits, b cloudian.QualityOfServiceLimits) bool {
-	eq := func(a *int64, b *int64) bool {
-		return (a == b) || (a != nil && b != nil && *a == *b)
-	}
-
-	return eq(a.InboundKiBsPerMin, b.InboundKiBsPerMin) &&
-		eq(a.OutboundKiBsPerMin, b.OutboundKiBsPerMin) &&
-		eq(a.RequestsPerMin, b.RequestsPerMin) &&
-		eq(a.StorageQuotaCount, b.StorageQuotaCount) &&
-		eq(a.StorageQuotaKiBs, b.StorageQuotaKiBs)
+	return ptr.Equal(a.InboundKiBsPerMin, b.InboundKiBsPerMin) &&
+		ptr.Equal(a.OutboundKiBsPerMin, b.OutboundKiBsPerMin) &&
+		ptr.Equal(a.RequestsPerMin, b.RequestsPerMin) &&
+		ptr.Equal(a.StorageQuotaCount, b.StorageQuotaCount) &&
+		ptr.Equal(a.StorageQuotaKiBs, b.StorageQuotaKiBs)
 }
