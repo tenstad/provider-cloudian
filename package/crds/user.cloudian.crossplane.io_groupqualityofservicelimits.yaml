@@ -160,27 +160,32 @@ spec:
                       inboundBytesPerMin:
                         description: InboundBytesPerMin is the limit for inbound data
                           per minute in bytes.
+                        nullable: true
                         pattern: ^(0|((0|[1-9][0-9]*)[KMGT]i))$
                         type: string
                       outboundBytesPerMin:
                         description: OutboundKiBsPerMin is the limit for outbound
                           data per minute in bytes.
+                        nullable: true
                         pattern: ^(0|((0|[1-9][0-9]*)[KMGT]i))$
                         type: string
                       requestsPerMin:
                         description: RequestsPerMin is the limit for number of HTTP
                           requests per minute.
                         format: int32
+                        nullable: true
                         type: integer
                       storageQuotaBytes:
                         description: StorageQuotaBytes is the limit for total stored
                           data in bytes.
+                        nullable: true
                         pattern: ^(0|((0|[1-9][0-9]*)[KMGT]i))$
                         type: string
                       storageQuotaCount:
                         description: StorageQuotaCount is the limit for total number
                           of objects.
                         format: int32
+                        nullable: true
                         type: integer
                     type: object
                   region:
@@ -193,27 +198,32 @@ spec:
                       inboundBytesPerMin:
                         description: InboundBytesPerMin is the limit for inbound data
                           per minute in bytes.
+                        nullable: true
                         pattern: ^(0|((0|[1-9][0-9]*)[KMGT]i))$
                         type: string
                       outboundBytesPerMin:
                         description: OutboundKiBsPerMin is the limit for outbound
                           data per minute in bytes.
+                        nullable: true
                         pattern: ^(0|((0|[1-9][0-9]*)[KMGT]i))$
                         type: string
                       requestsPerMin:
                         description: RequestsPerMin is the limit for number of HTTP
                           requests per minute.
                         format: int32
+                        nullable: true
                         type: integer
                       storageQuotaBytes:
                         description: StorageQuotaBytes is the limit for total stored
                           data in bytes.
+                        nullable: true
                         pattern: ^(0|((0|[1-9][0-9]*)[KMGT]i))$
                         type: string
                       storageQuotaCount:
                         description: StorageQuotaCount is the limit for total number
                           of objects.
                         format: int32
+                        nullable: true
                         type: integer
                     type: object
                 type: object

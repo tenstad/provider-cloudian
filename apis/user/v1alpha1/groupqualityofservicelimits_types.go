@@ -46,47 +46,52 @@ func (q *Quantity) ToKiB() (*int64, error) {
 // QualityOfService configures data limits. The value -1 indicates unlimited.
 type QualityOfServiceLimits struct {
 	// StorageQuotaBytes is the limit for total stored data in bytes.
-	//+optional
-	StorageQuotaBytes *Quantity `json:"storageQuotaBytes,omitempty"`
+	// +optional
+	// +nullable
+	StorageQuotaBytes *Quantity `json:"storageQuotaBytes"`
 	// StorageQuotaCount is the limit for total number of objects.
-	//+optional
-	StorageQuotaCount *uint32 `json:"storageQuotaCount,omitempty"`
+	// +optional
+	// +nullable
+	StorageQuotaCount *uint32 `json:"storageQuotaCount"`
 	// RequestsPerMin is the limit for number of HTTP requests per minute.
-	//+optional
-	RequestsPerMin *uint32 `json:"requestsPerMin,omitempty"`
+	// +optional
+	// +nullable
+	RequestsPerMin *uint32 `json:"requestsPerMin"`
 	// InboundBytesPerMin is the limit for inbound data per minute in bytes.
-	//+optional
-	InboundBytesPerMin *Quantity `json:"inboundBytesPerMin,omitempty"`
+	// +optional
+	// +nullable
+	InboundBytesPerMin *Quantity `json:"inboundBytesPerMin"`
 	// OutboundKiBsPerMin is the limit for outbound data per minute in bytes.
-	//+optional
-	OutboundBytesPerMin *Quantity `json:"outboundBytesPerMin,omitempty"`
+	// +optional
+	// +nullable
+	OutboundBytesPerMin *Quantity `json:"outboundBytesPerMin"`
 }
 
 // GroupQualityOfServiceLimitsParameters are the configurable fields of a GroupQualityOfServiceLimits.
 type GroupQualityOfServiceLimitsParameters struct {
 	// Group for the quality of service limits.
-	//+optional
-	//+immutable
+	// +optional
+	// +immutable
 	GroupID string `json:"groupId,omitempty"`
 
 	// GroupIDRef is a reference to a group to retrieve its groupId.
-	//+optional
-	//+immutable
+	// +optional
+	// +immutable
 	GroupIDRef *xpv1.Reference `json:"groupIdRef,omitempty"`
 
 	// GroupIDSelector selects reference to a group to retrieve its groupId.
-	//+optional
+	// +optional
 	GroupIDSelector *xpv1.Selector `json:"groupIdSelector,omitempty"`
 
 	// Region in which to apply the quality of service limits. Default region if unspecified.
 	Region string `json:"region,omitempty"`
 
 	// Warning is the soft limit that triggers a warning.
-	//+optional
+	// +optional
 	Warning *QualityOfServiceLimits `json:"warning,omitempty"`
 
 	// Hard is the hard limit.
-	//+optional
+	// +optional
 	Hard *QualityOfServiceLimits `json:"hard,omitempty"`
 }
 
