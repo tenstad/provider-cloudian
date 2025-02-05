@@ -84,6 +84,7 @@ type GroupQualityOfServiceLimitsParameters struct {
 	GroupIDSelector *xpv1.Selector `json:"groupIdSelector,omitempty"`
 
 	// Region in which to apply the quality of service limits. Default region if unspecified.
+	// +optional
 	Region string `json:"region,omitempty"`
 
 	// Warning is the soft limit that triggers a warning.
