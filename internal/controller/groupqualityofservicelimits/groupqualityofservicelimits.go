@@ -270,13 +270,13 @@ func toCloudianQos(qos v1alpha1.GroupQualityOfServiceLimitsParameters) (cloudian
 	if err != nil {
 		return cloudian.QualityOfService{}, err
 	}
-	high, err := toCloudianLimits(qos.Hard)
+	hard, err := toCloudianLimits(qos.Hard)
 	if err != nil {
 		return cloudian.QualityOfService{}, err
 	}
 	return cloudian.QualityOfService{
 		Warning: warning,
-		Hard:    high,
+		Hard:    hard,
 	}, nil
 }
 
