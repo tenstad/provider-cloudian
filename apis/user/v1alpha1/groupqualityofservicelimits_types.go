@@ -17,7 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"errors"
 	"reflect"
 
 	resource "k8s.io/apimachinery/pkg/api/resource"
@@ -40,15 +39,7 @@ func (q *Quantity) ToKiB() (*int64, error) {
 		return nil, err
 	}
 
-	i, ok := rq.AsInt64()
-	if !ok {
-		i, ok = rq.AsDec().Unscaled()
-		if !ok {
-			return nil, errors.New("Unable to convert Quantity to KiB int")
-		}
-	}
-
-	i /= 1024
+	i := rq.ScaledValue(0) / 1024
 	return &i, nil
 }
 
