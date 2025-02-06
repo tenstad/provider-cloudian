@@ -34,7 +34,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: A AccessKey is an example API type.
+        description: AccessKey represents an access key for a Cloudian user.
         properties:
           apiVersion:
             description: |-
@@ -75,14 +75,13 @@ spec:
                   AccessKey.
                 properties:
                   groupId:
-                    description: GroupID for the new access key.
+                    description: GroupID of the access key.
                     type: string
                   userId:
-                    description: User for the new access key.
+                    description: UserId of the access key.
                     type: string
                   userIdRef:
-                    description: UserIDRef is a reference to a user to retrieve its
-                      userId.
+                    description: UserIDRef references a user to retrieve its userId.
                     properties:
                       name:
                         description: Name of the referenced object.
@@ -116,8 +115,7 @@ spec:
                     - name
                     type: object
                   userIdSelector:
-                    description: UserIDSelector selects reference to a user to retrieve
-                      its userId.
+                    description: UserIDSelector selects a user to retrieve its userId.
                     properties:
                       matchControllerRef:
                         description: |-

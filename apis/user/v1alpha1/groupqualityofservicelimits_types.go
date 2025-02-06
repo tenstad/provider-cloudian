@@ -69,17 +69,17 @@ type QualityOfServiceLimits struct {
 
 // GroupQualityOfServiceLimitsParameters are the configurable fields of a GroupQualityOfServiceLimits.
 type GroupQualityOfServiceLimitsParameters struct {
-	// Group for the quality of service limits.
+	// GroupID of the quality of service limits.
 	// +optional
 	// +immutable
 	GroupID string `json:"groupId,omitempty"`
 
-	// GroupIDRef is a reference to a group to retrieve its groupId.
+	// GroupIDRef references a group to retrieve its groupId.
 	// +optional
 	// +immutable
 	GroupIDRef *xpv1.Reference `json:"groupIdRef,omitempty"`
 
-	// GroupIDSelector selects reference to a group to retrieve its groupId.
+	// GroupIDSelector selects a group to retrieve its groupId.
 	// +optional
 	GroupIDSelector *xpv1.Selector `json:"groupIdSelector,omitempty"`
 
@@ -114,7 +114,7 @@ type GroupQualityOfServiceLimitsStatus struct {
 
 // +kubebuilder:object:root=true
 
-// A GroupQualityOfServiceLimits is an example API type.
+// GroupQualityOfServiceLimits represents the quality of service limits for a Cloudian group, within a region.
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane\\.io/external-name"

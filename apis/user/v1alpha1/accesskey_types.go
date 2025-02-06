@@ -27,22 +27,22 @@ import (
 
 // AccessKeyParameters are the configurable fields of a AccessKey.
 type AccessKeyParameters struct {
-	// GroupID for the new access key.
+	// GroupID of the access key.
 	// +optional
 	// +immutable
 	GroupID string `json:"groupId,omitempty"`
 
-	// User for the new access key.
+	// UserId of the access key.
 	// +optional
 	// +immutable
 	UserID string `json:"userId,omitempty"`
 
-	// UserIDRef is a reference to a user to retrieve its userId.
+	// UserIDRef references a user to retrieve its userId.
 	// +optional
 	// +immutable
 	UserIDRef *xpv1.Reference `json:"userIdRef,omitempty"`
 
-	// UserIDSelector selects reference to a user to retrieve its userId.
+	// UserIDSelector selects a user to retrieve its userId.
 	// +optional
 	UserIDSelector *xpv1.Selector `json:"userIdSelector,omitempty"`
 }
@@ -67,7 +67,7 @@ type AccessKeyStatus struct {
 
 // +kubebuilder:object:root=true
 
-// A AccessKey is an example API type.
+// AccessKey represents an access key for a Cloudian user.
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane\\.io/external-name"
