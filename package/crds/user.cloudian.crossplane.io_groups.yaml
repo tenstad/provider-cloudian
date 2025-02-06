@@ -34,7 +34,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: A Group is an example API type.
+        description: Group represents a Cloudian group.
         properties:
           apiVersion:
             description: |-

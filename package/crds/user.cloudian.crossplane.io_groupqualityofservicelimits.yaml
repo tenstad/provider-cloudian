@@ -34,7 +34,8 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: A GroupQualityOfServiceLimits is an example API type.
+        description: GroupQualityOfServiceLimits represents the quality of service
+          limits for a Cloudian group, within a region.
         properties:
           apiVersion:
             description: |-
@@ -76,11 +77,10 @@ spec:
                   fields of a GroupQualityOfServiceLimits.
                 properties:
                   groupId:
-                    description: Group for the quality of service limits.
+                    description: GroupID of the quality of service limits.
                     type: string
                   groupIdRef:
-                    description: GroupIDRef is a reference to a group to retrieve
-                      its groupId.
+                    description: GroupIDRef references a group to retrieve its groupId.
                     properties:
                       name:
                         description: Name of the referenced object.
@@ -114,8 +114,7 @@ spec:
                     - name
                     type: object
                   groupIdSelector:
-                    description: GroupIDSelector selects reference to a group to retrieve
-                      its groupId.
+                    description: GroupIDSelector selects a group to retrieve its groupId.
                     properties:
                       matchControllerRef:
                         description: |-
