@@ -27,12 +27,10 @@ import (
 
 // UserQualityOfServiceLimitsParameters are the configurable fields of a UserQualityOfServiceLimits.
 type UserQualityOfServiceLimitsParameters struct {
-	ConfigurableField string `json:"configurableField"`
 }
 
 // UserQualityOfServiceLimitsObservation are the observable fields of a UserQualityOfServiceLimits.
 type UserQualityOfServiceLimitsObservation struct {
-	ObservableField string `json:"observableField,omitempty"`
 }
 
 // A UserQualityOfServiceLimitsSpec defines the desired state of a UserQualityOfServiceLimits.
