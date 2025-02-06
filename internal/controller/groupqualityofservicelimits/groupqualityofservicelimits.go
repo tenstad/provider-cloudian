@@ -18,13 +18,14 @@ package groupqualityofservicelimits
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/connection"
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
@@ -45,6 +46,9 @@ const (
 	errGetCreds                       = "cannot get credentials"
 
 	errNewClient = "cannot create new Service"
+	errCreateQOS = "cannot create QOS"
+	errDeleteQOS = "cannot delete QOS"
+	errGetQOS    = "cannot get QOS"
 )
 
 var (
@@ -142,8 +146,30 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotGroupQualityOfServiceLimits)
 	}
 
-	// These fmt statements should be removed in the real implementation.
-	fmt.Printf("Observing: %+v", cr)
+	groupID := cr.Spec.ForProvider.GroupID
+	if groupID == "" {
+		return managed.ExternalObservation{}, nil
+	}
+
+	user := cloudian.User{
+		GroupID: groupID,
+		UserID:  "*",
+	}
+	qos, err := c.cloudianService.GetQOS(ctx, user, cr.Spec.ForProvider.Region)
+
+	if errors.Is(err, cloudian.ErrNotFound) {
+		return managed.ExternalObservation{ResourceExists: false}, nil
+	}
+	if err != nil {
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetQOS)
+	}
+
+	cr.SetConditions(xpv1.Available())
+
+	expected, err := toCloudianQos(cr.Spec.ForProvider)
+	if err != nil {
+		return managed.ExternalObservation{}, err
+	}
 
 	return managed.ExternalObservation{
 		// Return false when the external resource does not exist. This lets
@@ -154,7 +180,8 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		// Return false when the external resource exists, but it not up to date
 		// with the desired managed resource state. This lets the managed
 		// resource reconciler know that it needs to call Update.
-		ResourceUpToDate: true,
+		ResourceUpToDate: limitsEqual(expected.Warning, qos.Warning) &&
+			limitsEqual(expected.Hard, qos.Hard),
 
 		// Return any details that may be required to connect to the external
 		// resource. These will be stored as the connection secret.
@@ -168,7 +195,18 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotGroupQualityOfServiceLimits)
 	}
 
-	fmt.Printf("Creating: %+v", cr)
+	qos, err := toCloudianQos(cr.Spec.ForProvider)
+	if err != nil {
+		return managed.ExternalCreation{}, err
+	}
+
+	user := cloudian.User{
+		GroupID: cr.Spec.ForProvider.GroupID,
+		UserID:  "*",
+	}
+	if err := c.cloudianService.SetQOS(ctx, user, cr.Spec.ForProvider.Region, qos); err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateQOS)
+	}
 
 	return managed.ExternalCreation{
 		// Optionally return any details that may be required to connect to the
@@ -183,7 +221,18 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotGroupQualityOfServiceLimits)
 	}
 
-	fmt.Printf("Updating: %+v", cr)
+	qos, err := toCloudianQos(cr.Spec.ForProvider)
+	if err != nil {
+		return managed.ExternalUpdate{}, err
+	}
+
+	user := cloudian.User{
+		GroupID: cr.Spec.ForProvider.GroupID,
+		UserID:  "*",
+	}
+	if err := c.cloudianService.SetQOS(ctx, user, cr.Spec.ForProvider.Region, qos); err != nil {
+		return managed.ExternalUpdate{}, errors.Wrap(err, errCreateQOS)
+	}
 
 	return managed.ExternalUpdate{
 		// Optionally return any details that may be required to connect to the
@@ -198,11 +247,71 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalDelete{}, errors.New(errNotGroupQualityOfServiceLimits)
 	}
 
-	fmt.Printf("Deleting: %+v", cr)
+	cr.SetConditions(xpv1.Deleting())
+
+	user := cloudian.User{
+		GroupID: cr.Spec.ForProvider.GroupID,
+		UserID:  "*",
+	}
+	err := c.cloudianService.DeleteQOS(ctx, user, cr.Spec.ForProvider.Region)
+	if err != nil && !errors.Is(err, cloudian.ErrNotFound) {
+		return managed.ExternalDelete{}, errors.Wrap(err, errGetCreds)
+	}
 
 	return managed.ExternalDelete{}, nil
 }
 
 func (c *external) Disconnect(ctx context.Context) error {
 	return nil
+}
+
+func toCloudianQos(qos v1alpha1.GroupQualityOfServiceLimitsParameters) (cloudian.QualityOfService, error) {
+	warning, err := toCloudianLimits(qos.Warning)
+	if err != nil {
+		return cloudian.QualityOfService{}, err
+	}
+	hard, err := toCloudianLimits(qos.Hard)
+	if err != nil {
+		return cloudian.QualityOfService{}, err
+	}
+	return cloudian.QualityOfService{
+		Warning: warning,
+		Hard:    hard,
+	}, nil
+}
+
+func toCloudianLimits(limits *v1alpha1.QualityOfServiceLimits) (cloudian.QualityOfServiceLimits, error) {
+	if limits == nil {
+		return cloudian.QualityOfServiceLimits{}, nil
+	}
+
+	var err error
+	qosl := cloudian.QualityOfServiceLimits{}
+
+	if qosl.StorageQuotaKiBs, err = limits.StorageQuotaBytes.ToKiB(); err != nil {
+		return cloudian.QualityOfServiceLimits{}, err
+	}
+	if qosl.InboundKiBsPerMin, err = limits.InboundBytesPerMin.ToKiB(); err != nil {
+		return cloudian.QualityOfServiceLimits{}, err
+	}
+	if qosl.OutboundKiBsPerMin, err = limits.OutboundBytesPerMin.ToKiB(); err != nil {
+		return cloudian.QualityOfServiceLimits{}, err
+	}
+
+	if limits.StorageQuotaCount != nil {
+		qosl.StorageQuotaCount = ptr.To(int64(*limits.StorageQuotaCount))
+	}
+	if limits.RequestsPerMin != nil {
+		qosl.RequestsPerMin = ptr.To(int64(*limits.RequestsPerMin))
+	}
+
+	return qosl, nil
+}
+
+func limitsEqual(a cloudian.QualityOfServiceLimits, b cloudian.QualityOfServiceLimits) bool {
+	return ptr.Equal(a.InboundKiBsPerMin, b.InboundKiBsPerMin) &&
+		ptr.Equal(a.OutboundKiBsPerMin, b.OutboundKiBsPerMin) &&
+		ptr.Equal(a.RequestsPerMin, b.RequestsPerMin) &&
+		ptr.Equal(a.StorageQuotaCount, b.StorageQuotaCount) &&
+		ptr.Equal(a.StorageQuotaKiBs, b.StorageQuotaKiBs)
 }

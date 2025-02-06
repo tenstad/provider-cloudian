@@ -57,6 +57,10 @@ func (qos *QualityOfService) unmarshalQOSList(raw []byte) error {
 	}
 
 	for _, item := range data.QOSLimitList {
+		if item.Value == -1 {
+			continue
+		}
+
 		v := &item.Value
 		switch item.Type {
 		case "STORAGE_QUOTA_KBYTES_LH":
