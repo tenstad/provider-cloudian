@@ -37,12 +37,12 @@ type AccessKeyParameters struct {
 	// +immutable
 	UserID string `json:"userId,omitempty"`
 
-	// UserIDRef references a user to retrieve its userId.
+	// UserIDRef references a user to retrieve its groupId and userId.
 	// +optional
 	// +immutable
 	UserIDRef *xpv1.Reference `json:"userIdRef,omitempty"`
 
-	// UserIDSelector selects a user to retrieve its userId.
+	// UserIDSelector selects a user to retrieve its groupId and userId.
 	// +optional
 	UserIDSelector *xpv1.Selector `json:"userIdSelector,omitempty"`
 }

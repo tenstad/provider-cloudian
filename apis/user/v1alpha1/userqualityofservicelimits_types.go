@@ -27,6 +27,24 @@ import (
 
 // UserQualityOfServiceLimitsParameters are the configurable fields of a UserQualityOfServiceLimits.
 type UserQualityOfServiceLimitsParameters struct {
+	// GroupID of the quality of service limits.
+	// +optional
+	// +immutable
+	GroupID string `json:"groupId,omitempty"`
+
+	// UserID of the quality of service limits.
+	// +optional
+	// +immutable
+	UserID string `json:"userId,omitempty"`
+
+	// UserIDRef references a user to retrieve its groupId and userId.
+	// +optional
+	// +immutable
+	UserIDRef *xpv1.Reference `json:"userIdRef,omitempty"`
+
+	// UserIDSelector selects a user to retrieve its groupId and userId.
+	// +optional
+	UserIDSelector *xpv1.Selector `json:"userIdSelector,omitempty"`
 }
 
 // UserQualityOfServiceLimitsObservation are the observable fields of a UserQualityOfServiceLimits.
@@ -47,7 +65,7 @@ type UserQualityOfServiceLimitsStatus struct {
 
 // +kubebuilder:object:root=true
 
-// A UserQualityOfServiceLimits is an example API type.
+// UserQualityOfServiceLimits represents the quality of service limits for a Cloudian user, within a region.
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane\\.io/external-name"
