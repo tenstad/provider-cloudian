@@ -166,7 +166,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	cr.SetConditions(xpv1.Available())
 
-	expected, err := qosapi.ToCloudianQos(cr.Spec.ForProvider.Warning, cr.Spec.ForProvider.Hard)
+	expected, err := qosapi.ToCloudianQOS(cr.Spec.ForProvider.Warning, cr.Spec.ForProvider.Hard)
 	if err != nil {
 		return managed.ExternalObservation{}, err
 	}
@@ -195,7 +195,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotGroupQualityOfServiceLimits)
 	}
 
-	qos, err := qosapi.ToCloudianQos(cr.Spec.ForProvider.Warning, cr.Spec.ForProvider.Hard)
+	qos, err := qosapi.ToCloudianQOS(cr.Spec.ForProvider.Warning, cr.Spec.ForProvider.Hard)
 	if err != nil {
 		return managed.ExternalCreation{}, err
 	}
@@ -221,7 +221,7 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotGroupQualityOfServiceLimits)
 	}
 
-	qos, err := qosapi.ToCloudianQos(cr.Spec.ForProvider.Warning, cr.Spec.ForProvider.Hard)
+	qos, err := qosapi.ToCloudianQOS(cr.Spec.ForProvider.Warning, cr.Spec.ForProvider.Hard)
 	if err != nil {
 		return managed.ExternalUpdate{}, err
 	}

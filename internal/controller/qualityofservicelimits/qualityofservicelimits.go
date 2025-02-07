@@ -6,7 +6,7 @@ import (
 	"k8s.io/utils/ptr"
 )
 
-func ToCloudianQos(warning *v1alpha1.QualityOfServiceLimits, hard *v1alpha1.QualityOfServiceLimits) (cloudian.QualityOfService, error) {
+func ToCloudianQOS(warning *v1alpha1.QualityOfServiceLimits, hard *v1alpha1.QualityOfServiceLimits) (cloudian.QualityOfService, error) {
 	var err error
 	qos := cloudian.QualityOfService{}
 
