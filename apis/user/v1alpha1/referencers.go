@@ -29,7 +29,6 @@ import (
 func (mg *User) ResolveReferences(ctx context.Context, c client.Reader) error {
 	r := reference.NewAPIResolver(c, mg)
 
-	// resolve spec.forProvider.group
 	rsp, err := r.Resolve(ctx, reference.ResolutionRequest{
 		CurrentValue: mg.Spec.ForProvider.GroupID,
 		Reference:    mg.Spec.ForProvider.GroupIDRef,
@@ -38,7 +37,7 @@ func (mg *User) ResolveReferences(ctx context.Context, c client.Reader) error {
 		Extract:      reference.ExternalName(),
 	})
 	if err != nil {
-		return errors.Wrap(err, "spec.forProvider.group")
+		return errors.Wrap(err, "unable to resolve spec.forProvider.groupId")
 	}
 
 	mg.Spec.ForProvider.GroupID = rsp.ResolvedValue
@@ -51,7 +50,6 @@ func (mg *User) ResolveReferences(ctx context.Context, c client.Reader) error {
 func (mg *GroupQualityOfServiceLimits) ResolveReferences(ctx context.Context, c client.Reader) error {
 	r := reference.NewAPIResolver(c, mg)
 
-	// resolve spec.forProvider.group
 	rsp, err := r.Resolve(ctx, reference.ResolutionRequest{
 		CurrentValue: mg.Spec.ForProvider.GroupID,
 		Reference:    mg.Spec.ForProvider.GroupIDRef,
@@ -60,7 +58,7 @@ func (mg *GroupQualityOfServiceLimits) ResolveReferences(ctx context.Context, c 
 		Extract:      reference.ExternalName(),
 	})
 	if err != nil {
-		return errors.Wrap(err, "spec.forProvider.group")
+		return errors.Wrap(err, "unable to resolve spec.forProvider.groupId")
 	}
 
 	mg.Spec.ForProvider.GroupID = rsp.ResolvedValue
@@ -73,7 +71,6 @@ func (mg *GroupQualityOfServiceLimits) ResolveReferences(ctx context.Context, c 
 func (mg *AccessKey) ResolveReferences(ctx context.Context, c client.Reader) error {
 	r := reference.NewAPIResolver(c, mg)
 
-	// resolve spec.forProvider.user
 	rsp, err := r.Resolve(ctx, reference.ResolutionRequest{
 		CurrentValue: mg.Spec.ForProvider.UserID,
 		Reference:    mg.Spec.ForProvider.UserIDRef,
@@ -82,13 +79,12 @@ func (mg *AccessKey) ResolveReferences(ctx context.Context, c client.Reader) err
 		Extract:      reference.ExternalName(),
 	})
 	if err != nil {
-		return errors.Wrap(err, "spec.forProvider.user")
+		return errors.Wrap(err, "unable to resolve spec.forProvider.userId")
 	}
 
 	mg.Spec.ForProvider.UserID = rsp.ResolvedValue
 	mg.Spec.ForProvider.UserIDRef = rsp.ResolvedReference
 
-	// resolve spec.forProvider.group
 	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
 		Reference: mg.Spec.ForProvider.UserIDRef,
 		Selector:  mg.Spec.ForProvider.UserIDSelector,
@@ -102,7 +98,7 @@ func (mg *AccessKey) ResolveReferences(ctx context.Context, c client.Reader) err
 		},
 	})
 	if err != nil {
-		return errors.Wrap(err, "spec.forProvider.group")
+		return errors.Wrap(err, "unable to resolve spec.forProvider.groupId")
 	}
 
 	mg.Spec.ForProvider.GroupID = rsp.ResolvedValue
@@ -114,7 +110,6 @@ func (mg *AccessKey) ResolveReferences(ctx context.Context, c client.Reader) err
 func (mg *UserQualityOfServiceLimits) ResolveReferences(ctx context.Context, c client.Reader) error {
 	r := reference.NewAPIResolver(c, mg)
 
-	// resolve spec.forProvider.user
 	rsp, err := r.Resolve(ctx, reference.ResolutionRequest{
 		CurrentValue: mg.Spec.ForProvider.UserID,
 		Reference:    mg.Spec.ForProvider.UserIDRef,
@@ -123,13 +118,12 @@ func (mg *UserQualityOfServiceLimits) ResolveReferences(ctx context.Context, c c
 		Extract:      reference.ExternalName(),
 	})
 	if err != nil {
-		return errors.Wrap(err, "spec.forProvider.user")
+		return errors.Wrap(err, "unable to resolve spec.forProvider.userId")
 	}
 
 	mg.Spec.ForProvider.UserID = rsp.ResolvedValue
 	mg.Spec.ForProvider.UserIDRef = rsp.ResolvedReference
 
-	// resolve spec.forProvider.group
 	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
 		Reference: mg.Spec.ForProvider.UserIDRef,
 		Selector:  mg.Spec.ForProvider.UserIDSelector,
@@ -143,7 +137,7 @@ func (mg *UserQualityOfServiceLimits) ResolveReferences(ctx context.Context, c c
 		},
 	})
 	if err != nil {
-		return errors.Wrap(err, "spec.forProvider.group")
+		return errors.Wrap(err, "unable to resolve spec.forProvider.groupId")
 	}
 
 	mg.Spec.ForProvider.GroupID = rsp.ResolvedValue
