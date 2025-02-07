@@ -45,6 +45,12 @@ type UserQualityOfServiceLimitsParameters struct {
 	// UserIDSelector selects a user to retrieve its groupId and userId.
 	// +optional
 	UserIDSelector *xpv1.Selector `json:"userIdSelector,omitempty"`
+
+	// Region in which to apply the quality of service limits. Default region if unspecified.
+	// +optional
+	Region string `json:"region,omitempty"`
+
+	QOS `json:",inline"`
 }
 
 // UserQualityOfServiceLimitsObservation are the observable fields of a UserQualityOfServiceLimits.
