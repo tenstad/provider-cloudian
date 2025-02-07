@@ -31,7 +31,7 @@ type QualityOfServiceLimits struct {
 	OutboundKiBsPerMin *int64
 }
 
-func (a QualityOfServiceLimits) Equal(b QualityOfServiceLimits) bool {
+func (a *QualityOfServiceLimits) Equal(b QualityOfServiceLimits) bool {
 	// k8s.io/utils/ptr Equal
 	eq := func(a, b *int64) bool {
 		if (a == nil) != (b == nil) {
