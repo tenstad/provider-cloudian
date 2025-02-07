@@ -34,7 +34,7 @@ import (
 
 	"github.com/statnett/provider-cloudian/apis/user/v1alpha1"
 	apisv1alpha1 "github.com/statnett/provider-cloudian/apis/v1alpha1"
-	qosapi "github.com/statnett/provider-cloudian/internal/controller/qualityofservicelimits"
+	qoslimits "github.com/statnett/provider-cloudian/internal/controller/qualityofservicelimits"
 	"github.com/statnett/provider-cloudian/internal/features"
 	"github.com/statnett/provider-cloudian/internal/sdk/cloudian"
 )
@@ -166,7 +166,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	cr.SetConditions(xpv1.Available())
 
-	expected, err := qosapi.ToCloudianQOS(cr.Spec.ForProvider.Warning, cr.Spec.ForProvider.Hard)
+	expected, err := qoslimits.ToCloudianQOS(cr.Spec.ForProvider.QOS)
 	if err != nil {
 		return managed.ExternalObservation{}, err
 	}
@@ -180,8 +180,8 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		// Return false when the external resource exists, but it not up to date
 		// with the desired managed resource state. This lets the managed
 		// resource reconciler know that it needs to call Update.
-		ResourceUpToDate: qosapi.LimitsEqual(expected.Warning, qos.Warning) &&
-			qosapi.LimitsEqual(expected.Hard, qos.Hard),
+		ResourceUpToDate: expected.Warning.Equal(qos.Warning) &&
+			expected.Hard.Equal(qos.Hard),
 
 		// Return any details that may be required to connect to the external
 		// resource. These will be stored as the connection secret.
@@ -195,7 +195,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotGroupQualityOfServiceLimits)
 	}
 
-	qos, err := qosapi.ToCloudianQOS(cr.Spec.ForProvider.Warning, cr.Spec.ForProvider.Hard)
+	qos, err := qoslimits.ToCloudianQOS(cr.Spec.ForProvider.QOS)
 	if err != nil {
 		return managed.ExternalCreation{}, err
 	}
@@ -221,7 +221,7 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotGroupQualityOfServiceLimits)
 	}
 
-	qos, err := qosapi.ToCloudianQOS(cr.Spec.ForProvider.Warning, cr.Spec.ForProvider.Hard)
+	qos, err := qoslimits.ToCloudianQOS(cr.Spec.ForProvider.QOS)
 	if err != nil {
 		return managed.ExternalUpdate{}, err
 	}

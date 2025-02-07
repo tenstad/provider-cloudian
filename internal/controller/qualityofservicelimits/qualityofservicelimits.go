@@ -1,22 +1,23 @@
 package qualityofservicelimits
 
 import (
+	"k8s.io/utils/ptr"
+
 	"github.com/statnett/provider-cloudian/apis/user/v1alpha1"
 	"github.com/statnett/provider-cloudian/internal/sdk/cloudian"
-	"k8s.io/utils/ptr"
 )
 
-func ToCloudianQOS(warning *v1alpha1.QualityOfServiceLimits, hard *v1alpha1.QualityOfServiceLimits) (cloudian.QualityOfService, error) {
+func ToCloudianQOS(qos v1alpha1.QOS) (cloudian.QualityOfService, error) {
 	var err error
-	qos := cloudian.QualityOfService{}
+	cQOS := cloudian.QualityOfService{}
 
-	if qos.Warning, err = ToCloudianLimits(warning); err != nil {
+	if cQOS.Warning, err = ToCloudianLimits(qos.Warning); err != nil {
 		return cloudian.QualityOfService{}, err
 	}
-	if qos.Hard, err = ToCloudianLimits(hard); err != nil {
+	if cQOS.Hard, err = ToCloudianLimits(qos.Hard); err != nil {
 		return cloudian.QualityOfService{}, err
 	}
-	return qos, nil
+	return cQOS, nil
 }
 
 func ToCloudianLimits(limits *v1alpha1.QualityOfServiceLimits) (cloudian.QualityOfServiceLimits, error) {
@@ -45,12 +46,4 @@ func ToCloudianLimits(limits *v1alpha1.QualityOfServiceLimits) (cloudian.Quality
 	}
 
 	return qosl, nil
-}
-
-func LimitsEqual(a cloudian.QualityOfServiceLimits, b cloudian.QualityOfServiceLimits) bool {
-	return ptr.Equal(a.InboundKiBsPerMin, b.InboundKiBsPerMin) &&
-		ptr.Equal(a.OutboundKiBsPerMin, b.OutboundKiBsPerMin) &&
-		ptr.Equal(a.RequestsPerMin, b.RequestsPerMin) &&
-		ptr.Equal(a.StorageQuotaCount, b.StorageQuotaCount) &&
-		ptr.Equal(a.StorageQuotaKiBs, b.StorageQuotaKiBs)
 }
