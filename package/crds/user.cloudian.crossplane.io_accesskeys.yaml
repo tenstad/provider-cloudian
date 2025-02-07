@@ -81,7 +81,8 @@ spec:
                     description: UserId of the access key.
                     type: string
                   userIdRef:
-                    description: UserIDRef references a user to retrieve its userId.
+                    description: UserIDRef references a user to retrieve its groupId
+                      and userId.
                     properties:
                       name:
                         description: Name of the referenced object.
@@ -115,7 +116,8 @@ spec:
                     - name
                     type: object
                   userIdSelector:
-                    description: UserIDSelector selects a user to retrieve its userId.
+                    description: UserIDSelector selects a user to retrieve its groupId
+                      and userId.
                     properties:
                       matchControllerRef:
                         description: |-
