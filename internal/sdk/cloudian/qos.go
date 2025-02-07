@@ -31,6 +31,24 @@ type QualityOfServiceLimits struct {
 	OutboundKiBsPerMin *int64
 }
 
+func (a *QualityOfServiceLimits) Equal(b QualityOfServiceLimits) bool {
+	// k8s.io/utils/ptr Equal
+	eq := func(a, b *int64) bool {
+		if (a == nil) != (b == nil) {
+			return false
+		}
+		if a == nil {
+			return true
+		}
+		return *a == *b
+	}
+	return eq(a.InboundKiBsPerMin, b.InboundKiBsPerMin) &&
+		eq(a.OutboundKiBsPerMin, b.OutboundKiBsPerMin) &&
+		eq(a.RequestsPerMin, b.RequestsPerMin) &&
+		eq(a.StorageQuotaCount, b.StorageQuotaCount) &&
+		eq(a.StorageQuotaKiBs, b.StorageQuotaKiBs)
+}
+
 func (qos *QualityOfService) allMinusOne() bool {
 	return qos.Warning.allMinusOne() && qos.Hard.allMinusOne()
 }

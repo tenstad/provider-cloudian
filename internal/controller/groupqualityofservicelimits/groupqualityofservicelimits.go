@@ -21,7 +21,6 @@ import (
 
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -35,6 +34,7 @@ import (
 
 	"github.com/statnett/provider-cloudian/apis/user/v1alpha1"
 	apisv1alpha1 "github.com/statnett/provider-cloudian/apis/v1alpha1"
+	qoslimits "github.com/statnett/provider-cloudian/internal/controller/qualityofservicelimits"
 	"github.com/statnett/provider-cloudian/internal/features"
 	"github.com/statnett/provider-cloudian/internal/sdk/cloudian"
 )
@@ -166,7 +166,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	cr.SetConditions(xpv1.Available())
 
-	expected, err := toCloudianQos(cr.Spec.ForProvider)
+	expected, err := qoslimits.ToCloudianQOS(cr.Spec.ForProvider.QOS)
 	if err != nil {
 		return managed.ExternalObservation{}, err
 	}
@@ -180,8 +180,8 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		// Return false when the external resource exists, but it not up to date
 		// with the desired managed resource state. This lets the managed
 		// resource reconciler know that it needs to call Update.
-		ResourceUpToDate: limitsEqual(expected.Warning, qos.Warning) &&
-			limitsEqual(expected.Hard, qos.Hard),
+		ResourceUpToDate: expected.Warning.Equal(qos.Warning) &&
+			expected.Hard.Equal(qos.Hard),
 
 		// Return any details that may be required to connect to the external
 		// resource. These will be stored as the connection secret.
@@ -195,7 +195,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotGroupQualityOfServiceLimits)
 	}
 
-	qos, err := toCloudianQos(cr.Spec.ForProvider)
+	qos, err := qoslimits.ToCloudianQOS(cr.Spec.ForProvider.QOS)
 	if err != nil {
 		return managed.ExternalCreation{}, err
 	}
@@ -221,7 +221,7 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotGroupQualityOfServiceLimits)
 	}
 
-	qos, err := toCloudianQos(cr.Spec.ForProvider)
+	qos, err := qoslimits.ToCloudianQOS(cr.Spec.ForProvider.QOS)
 	if err != nil {
 		return managed.ExternalUpdate{}, err
 	}
@@ -263,55 +263,4 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 
 func (c *external) Disconnect(ctx context.Context) error {
 	return nil
-}
-
-func toCloudianQos(qos v1alpha1.GroupQualityOfServiceLimitsParameters) (cloudian.QualityOfService, error) {
-	warning, err := toCloudianLimits(qos.Warning)
-	if err != nil {
-		return cloudian.QualityOfService{}, err
-	}
-	hard, err := toCloudianLimits(qos.Hard)
-	if err != nil {
-		return cloudian.QualityOfService{}, err
-	}
-	return cloudian.QualityOfService{
-		Warning: warning,
-		Hard:    hard,
-	}, nil
-}
-
-func toCloudianLimits(limits *v1alpha1.QualityOfServiceLimits) (cloudian.QualityOfServiceLimits, error) {
-	if limits == nil {
-		return cloudian.QualityOfServiceLimits{}, nil
-	}
-
-	var err error
-	qosl := cloudian.QualityOfServiceLimits{}
-
-	if qosl.StorageQuotaKiBs, err = limits.StorageQuotaBytes.ToKiB(); err != nil {
-		return cloudian.QualityOfServiceLimits{}, err
-	}
-	if qosl.InboundKiBsPerMin, err = limits.InboundBytesPerMin.ToKiB(); err != nil {
-		return cloudian.QualityOfServiceLimits{}, err
-	}
-	if qosl.OutboundKiBsPerMin, err = limits.OutboundBytesPerMin.ToKiB(); err != nil {
-		return cloudian.QualityOfServiceLimits{}, err
-	}
-
-	if limits.StorageQuotaCount != nil {
-		qosl.StorageQuotaCount = ptr.To(int64(*limits.StorageQuotaCount))
-	}
-	if limits.RequestsPerMin != nil {
-		qosl.RequestsPerMin = ptr.To(int64(*limits.RequestsPerMin))
-	}
-
-	return qosl, nil
-}
-
-func limitsEqual(a cloudian.QualityOfServiceLimits, b cloudian.QualityOfServiceLimits) bool {
-	return ptr.Equal(a.InboundKiBsPerMin, b.InboundKiBsPerMin) &&
-		ptr.Equal(a.OutboundKiBsPerMin, b.OutboundKiBsPerMin) &&
-		ptr.Equal(a.RequestsPerMin, b.RequestsPerMin) &&
-		ptr.Equal(a.StorageQuotaCount, b.StorageQuotaCount) &&
-		ptr.Equal(a.StorageQuotaKiBs, b.StorageQuotaKiBs)
 }
