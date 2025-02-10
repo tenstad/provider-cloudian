@@ -7,6 +7,8 @@ spec:
   forProvider:
     groupIdRef:
       name: foo
+  providerConfigRef:
+    name: example
 ---
 apiVersion: user.cloudian.crossplane.io/v1alpha1
 kind: UserQualityOfServiceLimits
@@ -24,3 +26,5 @@ spec:
       storageQuotaCount: 50000
     warning:
       storageQuotaBytes: 1Ti
+  providerConfigRef:
+    name: example

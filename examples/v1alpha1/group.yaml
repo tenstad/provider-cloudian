@@ -6,6 +6,8 @@ metadata:
 spec:
   forProvider:
     groupName: crossplane provisioned group
+  providerConfigRef:
+    name: example
 ---
 apiVersion: user.cloudian.crossplane.io/v1alpha1
 kind: GroupQualityOfServiceLimits
@@ -23,3 +25,5 @@ spec:
       storageQuotaCount: 100000
     warning:
       storageQuotaBytes: 2Ti
+  providerConfigRef:
+    name: example
