@@ -291,7 +291,7 @@ func (client Client) ListUserCredentials(ctx context.Context, user User) ([]Secu
 		return securityInfo, nil
 	case 204:
 		// Cloudian-API returns 204 if no security credentials found
-		return nil, ErrNotFound
+		return nil, nil
 	default:
 		return nil, fmt.Errorf("error: list credentials unexpected status code: %d", resp.StatusCode())
 	}

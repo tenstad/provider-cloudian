@@ -200,6 +200,18 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateUser)
 	}
 
+	// When Cloudian creates a user, a single access key is created inside it.
+	// Delete the access key, so that the user does not have any non-managed access keys.
+	creds, err := c.cloudianService.ListUserCredentials(ctx, user)
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, "failed to list access keys of user")
+	}
+	for _, cred := range creds {
+		if err := c.cloudianService.DeleteUserCredentials(ctx, cred.AccessKey); err != nil {
+			return managed.ExternalCreation{}, errors.Wrap(err, "failed to delete initial access key of user")
+		}
+	}
+
 	return managed.ExternalCreation{
 		// Optionally return any details that may be required to connect to the
 		// external resource. These will be stored as the connection secret.
