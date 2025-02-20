@@ -157,7 +157,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, nil
 	}
 
-	_, err := c.cloudianService.GetUser(ctx, cloudian.GroupUserID{
+	user, err := c.cloudianService.GetUser(ctx, cloudian.GroupUserID{
 		GroupID: group,
 		UserID:  externalName})
 	if errors.Is(err, cloudian.ErrNotFound) {
@@ -167,6 +167,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetUser)
 	}
 
+	cr.Status.AtProvider.CanonicalID = user.CanonicalUserID
 	cr.SetConditions(xpv1.Available())
 
 	return managed.ExternalObservation{
