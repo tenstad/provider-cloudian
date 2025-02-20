@@ -155,7 +155,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, nil
 	}
 
-	user := cloudian.User{
+	user := cloudian.UserID{
 		GroupID: groupID,
 		UserID:  userID,
 	}
@@ -204,7 +204,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, err
 	}
 
-	user := cloudian.User{
+	user := cloudian.UserID{
 		GroupID: cr.Spec.ForProvider.GroupID,
 		UserID:  cr.Spec.ForProvider.UserID,
 	}
@@ -230,7 +230,7 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, err
 	}
 
-	user := cloudian.User{
+	user := cloudian.UserID{
 		GroupID: cr.Spec.ForProvider.GroupID,
 		UserID:  cr.Spec.ForProvider.UserID,
 	}
@@ -253,7 +253,7 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	cr.SetConditions(xpv1.Deleting())
 
-	user := cloudian.User{
+	user := cloudian.UserID{
 		GroupID: cr.Spec.ForProvider.GroupID,
 		UserID:  cr.Spec.ForProvider.UserID,
 	}

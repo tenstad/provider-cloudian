@@ -87,23 +87,23 @@ func fromInternal(g groupInternal) Group {
 	}
 }
 
-type User struct {
-	UserID  string `json:"userId"`
+type UserType string
+
+const (
+	UserTypeSystemAdmin UserType = "SystemAdmin"
+	UserTypeGroupAdmin  UserType = "GroupAdmin"
+	UserTypeUser        UserType = "User"
+)
+
+type UserID struct {
 	GroupID string `json:"groupId"`
+	UserID  string `json:"userId"`
 }
 
-type userInternal struct {
-	UserID   string `json:"userId"`
-	GroupID  string `json:"groupId"`
-	UserType string `json:"userType"`
-}
-
-func toInternalUser(u User) userInternal {
-	return userInternal{
-		UserID:   u.UserID,
-		GroupID:  u.GroupID,
-		UserType: "User",
-	}
+type User struct {
+	UserID          `json:",inline"`
+	UserType        UserType `json:"userType"`
+	CanonicalUserID string   `json:"canonicalUserId,omitempty"`
 }
 
 // SecurityInfo is the Cloudian API's term for secure credentials
@@ -157,7 +157,7 @@ func (client Client) ListUsers(ctx context.Context, groupID string, userID *stri
 	// Paginated API endpoint where limit+1 elements indicates more pages
 	if len(users) > ListLimit {
 		// Fetch remaining users starting from the user after the limit
-		moreUsers, err := client.ListUsers(ctx, groupID, &users[ListLimit].UserID)
+		moreUsers, err := client.ListUsers(ctx, groupID, &users[ListLimit].UserID.UserID)
 		if err != nil {
 			return nil, err
 		}
@@ -169,7 +169,7 @@ func (client Client) ListUsers(ctx context.Context, groupID string, userID *stri
 }
 
 // Delete a single user. Errors if the user does not exist.
-func (client Client) DeleteUser(ctx context.Context, user User) error {
+func (client Client) DeleteUser(ctx context.Context, user UserID) error {
 	resp, err := client.newRequest(ctx).
 		SetQueryParams(map[string]string{
 			"groupId": user.GroupID,
@@ -192,7 +192,7 @@ func (client Client) DeleteUser(ctx context.Context, user User) error {
 // Create a single user of type `User` into a groupId
 func (client Client) CreateUser(ctx context.Context, user User) error {
 	resp, err := client.newRequest(ctx).
-		SetBody(toInternalUser(user)).
+		SetBody(user).
 		Put("/user")
 	if err != nil {
 		return err
@@ -208,13 +208,15 @@ func (client Client) CreateUser(ctx context.Context, user User) error {
 
 // GetUser gets a user. Returns an error even in the case of a user not found.
 // This error can then be checked against ErrNotFound: errors.Is(err, ErrNotFound)
-func (client Client) GetUser(ctx context.Context, user User) (*User, error) {
-	// FIXME: Introduce UserId struct and enrich User
+func (client Client) GetUser(ctx context.Context, userID UserID) (*User, error) {
+	var user User
+
 	resp, err := client.newRequest(ctx).
 		SetQueryParams(map[string]string{
-			"groupId": user.GroupID,
-			"userId":  user.UserID,
+			"groupId": userID.GroupID,
+			"userId":  userID.UserID,
 		}).
+		SetResult(&user).
 		Get("/user")
 	if err != nil {
 		return nil, err
@@ -232,7 +234,7 @@ func (client Client) GetUser(ctx context.Context, user User) (*User, error) {
 }
 
 // CreateUserCredentials creates a new set of credentials for a user.
-func (client Client) CreateUserCredentials(ctx context.Context, user User) (*SecurityInfo, error) {
+func (client Client) CreateUserCredentials(ctx context.Context, user UserID) (*SecurityInfo, error) {
 	var securityInfo SecurityInfo
 
 	resp, err := client.newRequest(ctx).
@@ -275,7 +277,7 @@ func (client Client) GetUserCredentials(ctx context.Context, accessKey string) (
 }
 
 // ListUserCredentials fetches all the credentials of a user.
-func (client Client) ListUserCredentials(ctx context.Context, user User) ([]SecurityInfo, error) {
+func (client Client) ListUserCredentials(ctx context.Context, user UserID) ([]SecurityInfo, error) {
 	var securityInfo []SecurityInfo
 
 	resp, err := client.newRequest(ctx).
@@ -322,7 +324,7 @@ func (client Client) DeleteGroupRecursive(ctx context.Context, groupID string) e
 	}
 
 	for _, user := range users {
-		if err := client.DeleteUser(ctx, user); err != nil {
+		if err := client.DeleteUser(ctx, user.UserID); err != nil {
 			return fmt.Errorf("error deleting user: %w", err)
 		}
 	}

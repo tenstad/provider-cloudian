@@ -68,7 +68,7 @@ func TestCreateCredentials(t *testing.T) {
 	})
 	defer testServer.Close()
 
-	credentials, err := cloudianClient.CreateUserCredentials(context.TODO(), User{GroupID: "QA", UserID: "user1"})
+	credentials, err := cloudianClient.CreateUserCredentials(context.TODO(), UserID{GroupID: "QA", UserID: "user1"})
 	if err != nil {
 		t.Errorf("Error creating credentials: %v", err)
 	}
@@ -104,7 +104,7 @@ func TestListUserCredentials(t *testing.T) {
 	defer testServer.Close()
 
 	credentials, err := cloudianClient.ListUserCredentials(
-		context.TODO(), User{UserID: "", GroupID: ""},
+		context.TODO(), UserID{UserID: "", GroupID: ""},
 	)
 	if err != nil {
 		t.Errorf("Error listing credentials: %v", err)
@@ -115,9 +115,9 @@ func TestListUserCredentials(t *testing.T) {
 }
 
 func TestListUsers(t *testing.T) {
-	var expected []User
+	var expected []UserID
 	for i := 0; i < 500; i++ {
-		expected = append(expected, User{GroupID: "QA", UserID: strconv.Itoa(i)})
+		expected = append(expected, UserID{GroupID: "QA", UserID: strconv.Itoa(i)})
 	}
 
 	cloudianClient, testServer := mockBy(func(w http.ResponseWriter, r *http.Request) {
@@ -158,12 +158,12 @@ func mockBy(handler http.HandlerFunc) (*Client, *httptest.Server) {
 func TestClient_GetUser(t *testing.T) {
 	tests := []struct {
 		name    string
-		user    User
+		user    UserID
 		status  int
 		wantErr error
 	}{
-		{name: "Exists", user: User{UserID: strconv.Itoa(http.StatusOK)}},
-		{name: "Not found", user: User{UserID: strconv.Itoa(http.StatusNoContent)}, wantErr: ErrNotFound},
+		{name: "Exists", user: UserID{UserID: strconv.Itoa(http.StatusOK)}},
+		{name: "Not found", user: UserID{UserID: strconv.Itoa(http.StatusNoContent)}, wantErr: ErrNotFound},
 	}
 
 	client, testServer := mockBy(func(w http.ResponseWriter, r *http.Request) {
