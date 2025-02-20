@@ -44,7 +44,6 @@ type UserParameters struct {
 
 // UserObservation are the observable fields of a User.
 type UserObservation struct {
-	CanonicalID string `json:"canonicalId,omitempty"`
 }
 
 // A UserSpec defines the desired state of a User.

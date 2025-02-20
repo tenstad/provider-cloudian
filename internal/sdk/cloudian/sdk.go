@@ -101,9 +101,8 @@ type UserID struct {
 }
 
 type User struct {
-	UserID          `json:",inline"`
-	UserType        UserType `json:"userType"`
-	CanonicalUserID string   `json:"canonicalUserId,omitempty"`
+	UserID   `json:",inline"`
+	UserType UserType `json:"userType"`
 }
 
 // SecurityInfo is the Cloudian API's term for secure credentials

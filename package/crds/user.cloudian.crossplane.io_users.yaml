@@ -325,9 +325,6 @@ spec:
             properties:
               atProvider:
                 description: UserObservation are the observable fields of a User.
-                properties:
-                  canonicalId:
-                    type: string
                 type: object
               conditions:
                 description: Conditions of the resource.
