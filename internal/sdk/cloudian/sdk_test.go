@@ -162,8 +162,8 @@ func TestClient_GetUser(t *testing.T) {
 		status  int
 		wantErr error
 	}{
-		{name: "Exists", user: User{GroupUserID: GroupUserID{UserID: strconv.Itoa(http.StatusOK)}}},
-		{name: "Not found", user: User{GroupUserID: GroupUserID{UserID: strconv.Itoa(http.StatusNoContent)}}, wantErr: ErrNotFound},
+		{name: "Exists", user: User{GroupUserID: GroupUserID{UserID: strconv.Itoa(http.StatusOK)}, CanonicalID: "123"}},
+		{name: "Not found", user: User{GroupUserID: GroupUserID{UserID: strconv.Itoa(http.StatusNoContent)}, CanonicalID: "123"}, wantErr: ErrNotFound},
 	}
 
 	client, testServer := mockBy(func(w http.ResponseWriter, r *http.Request) {
