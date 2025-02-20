@@ -87,23 +87,22 @@ func fromInternal(g groupInternal) Group {
 	}
 }
 
-type User struct {
-	UserID  string `json:"userId"`
+type UserType string
+
+const (
+	UserTypeSystemAdmin UserType = "SystemAdmin"
+	UserTypeGroupAdmin  UserType = "GroupAdmin"
+	UserTypeStandard    UserType = "User"
+)
+
+type GroupUserID struct {
 	GroupID string `json:"groupId"`
+	UserID  string `json:"userId"`
 }
 
-type userInternal struct {
-	UserID   string `json:"userId"`
-	GroupID  string `json:"groupId"`
-	UserType string `json:"userType"`
-}
-
-func toInternalUser(u User) userInternal {
-	return userInternal{
-		UserID:   u.UserID,
-		GroupID:  u.GroupID,
-		UserType: "User",
-	}
+type User struct {
+	GroupUserID `json:",inline"`
+	UserType    UserType `json:"userType"`
 }
 
 // SecurityInfo is the Cloudian API's term for secure credentials
@@ -157,7 +156,7 @@ func (client Client) ListUsers(ctx context.Context, groupID string, userID *stri
 	// Paginated API endpoint where limit+1 elements indicates more pages
 	if len(users) > ListLimit {
 		// Fetch remaining users starting from the user after the limit
-		moreUsers, err := client.ListUsers(ctx, groupID, &users[ListLimit].UserID)
+		moreUsers, err := client.ListUsers(ctx, groupID, &users[ListLimit].GroupUserID.UserID)
 		if err != nil {
 			return nil, err
 		}
@@ -169,11 +168,11 @@ func (client Client) ListUsers(ctx context.Context, groupID string, userID *stri
 }
 
 // Delete a single user. Errors if the user does not exist.
-func (client Client) DeleteUser(ctx context.Context, user User) error {
+func (client Client) DeleteUser(ctx context.Context, guid GroupUserID) error {
 	resp, err := client.newRequest(ctx).
 		SetQueryParams(map[string]string{
-			"groupId": user.GroupID,
-			"userId":  user.UserID,
+			"groupId": guid.GroupID,
+			"userId":  guid.UserID,
 		}).
 		Delete("/user")
 	if err != nil {
@@ -192,7 +191,7 @@ func (client Client) DeleteUser(ctx context.Context, user User) error {
 // Create a single user of type `User` into a groupId
 func (client Client) CreateUser(ctx context.Context, user User) error {
 	resp, err := client.newRequest(ctx).
-		SetBody(toInternalUser(user)).
+		SetBody(user).
 		Put("/user")
 	if err != nil {
 		return err
@@ -208,13 +207,15 @@ func (client Client) CreateUser(ctx context.Context, user User) error {
 
 // GetUser gets a user. Returns an error even in the case of a user not found.
 // This error can then be checked against ErrNotFound: errors.Is(err, ErrNotFound)
-func (client Client) GetUser(ctx context.Context, user User) (*User, error) {
-	// FIXME: Introduce UserId struct and enrich User
+func (client Client) GetUser(ctx context.Context, guid GroupUserID) (*User, error) {
+	var user User
+
 	resp, err := client.newRequest(ctx).
 		SetQueryParams(map[string]string{
-			"groupId": user.GroupID,
-			"userId":  user.UserID,
+			"groupId": guid.GroupID,
+			"userId":  guid.UserID,
 		}).
+		SetResult(&user).
 		Get("/user")
 	if err != nil {
 		return nil, err
@@ -232,12 +233,12 @@ func (client Client) GetUser(ctx context.Context, user User) (*User, error) {
 }
 
 // CreateUserCredentials creates a new set of credentials for a user.
-func (client Client) CreateUserCredentials(ctx context.Context, user User) (*SecurityInfo, error) {
+func (client Client) CreateUserCredentials(ctx context.Context, guid GroupUserID) (*SecurityInfo, error) {
 	var securityInfo SecurityInfo
 
 	resp, err := client.newRequest(ctx).
 		SetResult(&securityInfo).
-		SetQueryParams(map[string]string{"groupId": user.GroupID, "userId": user.UserID}).
+		SetQueryParams(map[string]string{"groupId": guid.GroupID, "userId": guid.UserID}).
 		Put("/user/credentials")
 	if err != nil {
 		return nil, err
@@ -275,11 +276,11 @@ func (client Client) GetUserCredentials(ctx context.Context, accessKey string) (
 }
 
 // ListUserCredentials fetches all the credentials of a user.
-func (client Client) ListUserCredentials(ctx context.Context, user User) ([]SecurityInfo, error) {
+func (client Client) ListUserCredentials(ctx context.Context, guid GroupUserID) ([]SecurityInfo, error) {
 	var securityInfo []SecurityInfo
 
 	resp, err := client.newRequest(ctx).
-		SetQueryParams(map[string]string{"groupId": user.GroupID, "userId": user.UserID}).
+		SetQueryParams(map[string]string{"groupId": guid.GroupID, "userId": guid.UserID}).
 		SetResult(&securityInfo).
 		Get("/user/credentials/list")
 	if err != nil {
@@ -322,7 +323,7 @@ func (client Client) DeleteGroupRecursive(ctx context.Context, groupID string) e
 	}
 
 	for _, user := range users {
-		if err := client.DeleteUser(ctx, user); err != nil {
+		if err := client.DeleteUser(ctx, user.GroupUserID); err != nil {
 			return fmt.Errorf("error deleting user: %w", err)
 		}
 	}
