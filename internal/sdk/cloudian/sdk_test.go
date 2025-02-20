@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strconv"
 	"testing"
 
@@ -115,9 +116,9 @@ func TestListUserCredentials(t *testing.T) {
 }
 
 func TestListUsers(t *testing.T) {
-	var expected []UserID
+	var expected []User
 	for i := 0; i < 500; i++ {
-		expected = append(expected, UserID{GroupID: "QA", UserID: strconv.Itoa(i)})
+		expected = append(expected, User{UserID: UserID{GroupID: "QA", UserID: strconv.Itoa(i)}})
 	}
 
 	cloudianClient, testServer := mockBy(func(w http.ResponseWriter, r *http.Request) {
@@ -158,26 +159,46 @@ func mockBy(handler http.HandlerFunc) (*Client, *httptest.Server) {
 func TestClient_GetUser(t *testing.T) {
 	tests := []struct {
 		name    string
-		user    UserID
+		user    User
 		status  int
 		wantErr error
 	}{
-		{name: "Exists", user: UserID{UserID: strconv.Itoa(http.StatusOK)}},
-		{name: "Not found", user: UserID{UserID: strconv.Itoa(http.StatusNoContent)}, wantErr: ErrNotFound},
+		{name: "Exists", user: User{UserID: UserID{UserID: strconv.Itoa(http.StatusOK)}, CanonicalUserID: "123"}},
+		{name: "Not found", user: User{UserID: UserID{UserID: strconv.Itoa(http.StatusNoContent)}, CanonicalUserID: "456"}, wantErr: ErrNotFound},
 	}
 
 	client, testServer := mockBy(func(w http.ResponseWriter, r *http.Request) {
 		userId := r.URL.Query().Get("userId")
 		statusCode, _ := strconv.Atoi(userId)
+		if statusCode == http.StatusOK {
+			for _, tt := range tests {
+				if tt.user.UserID.UserID == userId {
+					json.NewEncoder(w).Encode(tt.user)
+					break
+				}
+			}
+		}
 		w.WriteHeader(statusCode)
 	})
 	defer testServer.Close()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := client.GetUser(context.Background(), tt.user)
+			user, err := client.GetUser(context.Background(), tt.user.UserID)
+
 			if !errors.Is(err, tt.wantErr) {
 				t.Errorf("GetUser() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			switch tt.wantErr {
+			case nil:
+				if !reflect.DeepEqual(user, &tt.user) {
+					t.Errorf("GetUser() got = %v, expected %v", user, tt.user)
+				}
+			default:
+				if user != nil {
+					t.Errorf("GetUser() got = %v, expected nil", user)
+				}
 			}
 		})
 	}
