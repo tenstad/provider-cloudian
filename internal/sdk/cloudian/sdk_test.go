@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"strconv"
 	"testing"
 
@@ -192,7 +191,7 @@ func TestClient_GetUser(t *testing.T) {
 
 			switch tt.wantErr {
 			case nil:
-				if !reflect.DeepEqual(user, &tt.user) {
+				if !cmp.Equal(user, &tt.user) {
 					t.Errorf("GetUser() got = %v, expected %v", user, tt.user)
 				}
 			default:
