@@ -155,11 +155,11 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, nil
 	}
 
-	user := cloudian.UserID{
+	guid := cloudian.GroupUserID{
 		GroupID: groupID,
 		UserID:  userID,
 	}
-	qos, err := c.cloudianService.GetQOS(ctx, user, cr.Spec.ForProvider.Region)
+	qos, err := c.cloudianService.GetQOS(ctx, guid, cr.Spec.ForProvider.Region)
 
 	if errors.Is(err, cloudian.ErrNotFound) {
 		return managed.ExternalObservation{ResourceExists: false}, nil
@@ -204,11 +204,11 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, err
 	}
 
-	user := cloudian.UserID{
+	guid := cloudian.GroupUserID{
 		GroupID: cr.Spec.ForProvider.GroupID,
 		UserID:  cr.Spec.ForProvider.UserID,
 	}
-	if err := c.cloudianService.SetQOS(ctx, user, cr.Spec.ForProvider.Region, qos); err != nil {
+	if err := c.cloudianService.SetQOS(ctx, guid, cr.Spec.ForProvider.Region, qos); err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateQOS)
 	}
 
@@ -230,11 +230,11 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, err
 	}
 
-	user := cloudian.UserID{
+	guid := cloudian.GroupUserID{
 		GroupID: cr.Spec.ForProvider.GroupID,
 		UserID:  cr.Spec.ForProvider.UserID,
 	}
-	if err := c.cloudianService.SetQOS(ctx, user, cr.Spec.ForProvider.Region, qos); err != nil {
+	if err := c.cloudianService.SetQOS(ctx, guid, cr.Spec.ForProvider.Region, qos); err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errCreateQOS)
 	}
 
@@ -253,11 +253,11 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	cr.SetConditions(xpv1.Deleting())
 
-	user := cloudian.UserID{
+	guid := cloudian.GroupUserID{
 		GroupID: cr.Spec.ForProvider.GroupID,
 		UserID:  cr.Spec.ForProvider.UserID,
 	}
-	err := c.cloudianService.DeleteQOS(ctx, user, cr.Spec.ForProvider.Region)
+	err := c.cloudianService.DeleteQOS(ctx, guid, cr.Spec.ForProvider.Region)
 	if err != nil && !errors.Is(err, cloudian.ErrNotFound) {
 		return managed.ExternalDelete{}, errors.Wrap(err, errGetCreds)
 	}

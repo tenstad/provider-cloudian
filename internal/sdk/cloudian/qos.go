@@ -139,7 +139,7 @@ func (qos *QualityOfService) queryParams(params map[string]string) error {
 // Default user-level QoS for the whole region (GroupID="*", UserID="ALL")
 // Group-level QoS for a specific group (GroupID="<groupId>", UserID="*")
 // Default group-level QoS for the whole region (GroupID="ALL", UserID="*")
-func (client Client) SetQOS(ctx context.Context, user UserID, region string, qos QualityOfService) error {
+func (client Client) SetQOS(ctx context.Context, guid GroupUserID, region string, qos QualityOfService) error {
 	for _, val := range qos.rawQueryParams() {
 		if val != nil && *val < -1 {
 			return fmt.Errorf("QoS limit values must be >= -1")
@@ -161,8 +161,8 @@ func (client Client) SetQOS(ctx context.Context, user UserID, region string, qos
 	}
 
 	resp, err := client.newRequest(ctx).
-		SetQueryParam("userId", user.UserID).
-		SetQueryParam("groupId", user.GroupID).
+		SetQueryParam("userId", guid.UserID).
+		SetQueryParam("groupId", guid.GroupID).
 		SetQueryParams(params).
 		Post("/qos/limits")
 	if err != nil {
@@ -179,15 +179,15 @@ func (client Client) SetQOS(ctx context.Context, user UserID, region string, qos
 
 // SetQOS gets QualityOfService limits for a Group or User, depending on the value of GroupID and UserID.
 // See SetQOS for details.
-func (client Client) GetQOS(ctx context.Context, user UserID, region string) (*QualityOfService, error) {
+func (client Client) GetQOS(ctx context.Context, guid GroupUserID, region string) (*QualityOfService, error) {
 	params := make(map[string]string)
 	if region != DefaultRegion {
 		params["region"] = region
 	}
 
 	resp, err := client.newRequest(ctx).
-		SetQueryParam("userId", user.UserID).
-		SetQueryParam("groupId", user.GroupID).
+		SetQueryParam("userId", guid.UserID).
+		SetQueryParam("groupId", guid.GroupID).
 		SetQueryParams(params).
 		Get("/qos/limits")
 	if err != nil {
@@ -218,15 +218,15 @@ func (client Client) GetQOS(ctx context.Context, user UserID, region string) (*Q
 
 // DeleteQOS deletes QualityOfService limits for a Group or User, depending on the value of GroupID and UserID.
 // See SetQOS for details.
-func (client Client) DeleteQOS(ctx context.Context, user UserID, region string) error {
+func (client Client) DeleteQOS(ctx context.Context, guid GroupUserID, region string) error {
 	params := make(map[string]string)
 	if region != DefaultRegion {
 		params["region"] = region
 	}
 
 	resp, err := client.newRequest(ctx).
-		SetQueryParam("userId", user.UserID).
-		SetQueryParam("groupId", user.GroupID).
+		SetQueryParam("userId", guid.UserID).
+		SetQueryParam("groupId", guid.GroupID).
 		SetQueryParams(params).
 		Delete("/qos/limits")
 	if err != nil {

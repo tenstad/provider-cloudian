@@ -69,7 +69,7 @@ func TestCreateCredentials(t *testing.T) {
 	})
 	defer testServer.Close()
 
-	credentials, err := cloudianClient.CreateUserCredentials(context.TODO(), UserID{GroupID: "QA", UserID: "user1"})
+	credentials, err := cloudianClient.CreateUserCredentials(context.TODO(), GroupUserID{GroupID: "QA", UserID: "user1"})
 	if err != nil {
 		t.Errorf("Error creating credentials: %v", err)
 	}
@@ -105,7 +105,7 @@ func TestListUserCredentials(t *testing.T) {
 	defer testServer.Close()
 
 	credentials, err := cloudianClient.ListUserCredentials(
-		context.TODO(), UserID{UserID: "", GroupID: ""},
+		context.TODO(), GroupUserID{UserID: "", GroupID: ""},
 	)
 	if err != nil {
 		t.Errorf("Error listing credentials: %v", err)
@@ -118,7 +118,7 @@ func TestListUserCredentials(t *testing.T) {
 func TestListUsers(t *testing.T) {
 	var expected []User
 	for i := 0; i < 500; i++ {
-		expected = append(expected, User{UserID: UserID{GroupID: "QA", UserID: strconv.Itoa(i)}})
+		expected = append(expected, User{GroupUserID: GroupUserID{GroupID: "QA", UserID: strconv.Itoa(i)}})
 	}
 
 	cloudianClient, testServer := mockBy(func(w http.ResponseWriter, r *http.Request) {
@@ -163,8 +163,8 @@ func TestClient_GetUser(t *testing.T) {
 		status  int
 		wantErr error
 	}{
-		{name: "Exists", user: User{UserID: UserID{UserID: strconv.Itoa(http.StatusOK)}}},
-		{name: "Not found", user: User{UserID: UserID{UserID: strconv.Itoa(http.StatusNoContent)}}, wantErr: ErrNotFound},
+		{name: "Exists", user: User{GroupUserID: GroupUserID{UserID: strconv.Itoa(http.StatusOK)}}},
+		{name: "Not found", user: User{GroupUserID: GroupUserID{UserID: strconv.Itoa(http.StatusNoContent)}}, wantErr: ErrNotFound},
 	}
 
 	client, testServer := mockBy(func(w http.ResponseWriter, r *http.Request) {
@@ -172,7 +172,7 @@ func TestClient_GetUser(t *testing.T) {
 		statusCode, _ := strconv.Atoi(userId)
 		if statusCode == http.StatusOK {
 			for _, tt := range tests {
-				if tt.user.UserID.UserID == userId {
+				if tt.user.GroupUserID.UserID == userId {
 					json.NewEncoder(w).Encode(tt.user)
 					break
 				}
@@ -184,7 +184,7 @@ func TestClient_GetUser(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			user, err := client.GetUser(context.Background(), tt.user.UserID)
+			user, err := client.GetUser(context.Background(), tt.user.GroupUserID)
 
 			if !errors.Is(err, tt.wantErr) {
 				t.Errorf("GetUser() error = %v, wantErr %v", err, tt.wantErr)

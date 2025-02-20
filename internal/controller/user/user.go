@@ -157,7 +157,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, nil
 	}
 
-	_, err := c.cloudianService.GetUser(ctx, cloudian.UserID{
+	_, err := c.cloudianService.GetUser(ctx, cloudian.GroupUserID{
 		GroupID: group,
 		UserID:  externalName})
 	if errors.Is(err, cloudian.ErrNotFound) {
@@ -193,7 +193,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	}
 
 	user := cloudian.User{
-		UserID: cloudian.UserID{
+		GroupUserID: cloudian.GroupUserID{
 			GroupID: cr.Spec.ForProvider.GroupID,
 			UserID:  meta.GetExternalName(mg),
 		},
@@ -205,7 +205,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	// When Cloudian creates a user, a single access key is created inside it.
 	// Delete the access key, so that the user does not have any non-managed access keys.
-	creds, err := c.cloudianService.ListUserCredentials(ctx, user.UserID)
+	creds, err := c.cloudianService.ListUserCredentials(ctx, user.GroupUserID)
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, "failed to list access keys of user")
 	}
@@ -243,12 +243,12 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalDelete{}, errors.New(errNotUser)
 	}
 
-	user := cloudian.UserID{
+	guid := cloudian.GroupUserID{
 		GroupID: cr.Spec.ForProvider.GroupID,
 		UserID:  meta.GetExternalName(mg),
 	}
 
-	creds, err := c.cloudianService.ListUserCredentials(ctx, user)
+	creds, err := c.cloudianService.ListUserCredentials(ctx, guid)
 	if err != nil {
 		return managed.ExternalDelete{}, err
 	}
@@ -256,7 +256,7 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalDelete{}, errors.New("User has access keys and cannot be deleted")
 	}
 
-	if err := c.cloudianService.DeleteUser(ctx, user); err != nil {
+	if err := c.cloudianService.DeleteUser(ctx, guid); err != nil {
 		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteUser)
 	}
 
