@@ -197,7 +197,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 			GroupID: cr.Spec.ForProvider.GroupID,
 			UserID:  meta.GetExternalName(mg),
 		},
-		UserType: cloudian.UserTypeUser,
+		UserType: cloudian.UserTypeStandard,
 	}
 	if err := c.cloudianService.CreateUser(ctx, user); err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateUser)

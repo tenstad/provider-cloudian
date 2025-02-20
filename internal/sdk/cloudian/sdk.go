@@ -92,7 +92,7 @@ type UserType string
 const (
 	UserTypeSystemAdmin UserType = "SystemAdmin"
 	UserTypeGroupAdmin  UserType = "GroupAdmin"
-	UserTypeUser        UserType = "User"
+	UserTypeStandard    UserType = "User"
 )
 
 type GroupUserID struct {
